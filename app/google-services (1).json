@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "262264957123",
+    "project_id": "mk-transit",
+    "storage_bucket": "mk-transit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262264957123:android:2878b9c1422cd856775a76",
+        "android_client_info": {
+          "package_name": "mk.fikt.mktransit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAysuokYLqx0Ad038qV2rvDYo7xcW78nI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
