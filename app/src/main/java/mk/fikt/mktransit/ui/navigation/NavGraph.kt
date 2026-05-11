@@ -3,15 +3,18 @@ package mk.fikt.mktransit.ui.navigation
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import mk.fikt.mktransit.ui.screens.auth.ForgotPasswordScreen
 import mk.fikt.mktransit.ui.screens.auth.LoginScreen
 import mk.fikt.mktransit.ui.screens.auth.RegisterScreen
 import mk.fikt.mktransit.ui.screens.auth.RoleSelectionScreen
 import mk.fikt.mktransit.ui.screens.auth.WelcomeScreen
 import mk.fikt.mktransit.ui.screens.home.HomeScreen
+import mk.fikt.mktransit.ui.screens.lines.LineDetailScreen
 import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 
 @Composable
@@ -99,6 +102,18 @@ fun NavGraph(
             )
         }
 
+        composable(
+            route = NavRoutes.LINE_DETAIL,
+            arguments = listOf(navArgument("lineId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val lineId = backStackEntry.arguments?.getString("lineId") ?: ""
+            LineDetailScreen(
+                lineId = lineId,
+                onBack = { navController.popBackStack() },
+                onBuyTicket = { navController.navigate(NavRoutes.ticketPurchase(it)) }
+            )
+        }
+
         composable(NavRoutes.MAP) {
             Text("Map — Coming Soon!")
         }
@@ -111,8 +126,8 @@ fun NavGraph(
             Text("Messages — Coming Soon!")
         }
 
-        composable(NavRoutes.LINE_DETAIL) {
-            Text("Line Detail — Coming Soon!")
+        composable(NavRoutes.TICKET_PURCHASE) {
+            Text("Ticket Purchase — Coming Soon!")
         }
     }
 }
