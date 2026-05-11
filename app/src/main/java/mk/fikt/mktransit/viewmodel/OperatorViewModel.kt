@@ -1,0 +1,192 @@
+package mk.fikt.mktransit.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import mk.fikt.mktransit.domain.model.BusLine
+import mk.fikt.mktransit.domain.model.LineType
+import mk.fikt.mktransit.domain.model.OperatorProfile
+import javax.inject.Inject
+
+sealed class OperatorState {
+    object Loading : OperatorState()
+    object Idle : OperatorState()
+    data class ProfileLoaded(val profile: OperatorProfile) : OperatorState()
+    data class LinesLoaded(val lines: List<BusLine>) : OperatorState()
+    data class Error(val message: String) : OperatorState()
+    object SaveSuccess : OperatorState()
+}
+
+@HiltViewModel
+class OperatorViewModel @Inject constructor() : ViewModel() {
+
+    private val firestore = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+
+    private val _state = MutableStateFlow<OperatorState>(OperatorState.Idle)
+    val state: StateFlow<OperatorState> = _state
+
+    private val _profile = MutableStateFlow<OperatorProfile?>(null)
+    val profile: StateFlow<OperatorProfile?> = _profile
+
+    private val _lines = MutableStateFlow<List<BusLine>>(emptyList())
+    val lines: StateFlow<List<BusLine>> = _lines
+
+    // Вчитај профил на операторот
+    fun loadOperatorProfile() {
+        viewModelScope.launch {
+            _state.value = OperatorState.Loading
+            try {
+                val uid = auth.currentUser?.uid ?: return@launch
+                val snapshot = firestore.collection("operators")
+                    .whereEqualTo("uid", uid)
+                    .get().await()
+
+                if (!snapshot.isEmpty) {
+                    val doc = snapshot.documents[0]
+                    val profile = OperatorProfile(
+                        operatorId = doc.id,
+                        uid = uid,
+                        companyName = doc.getString("companyName") ?: "",
+                        logoUrl = doc.getString("logoUrl") ?: "",
+                        description = doc.getString("description") ?: "",
+                        contactEmail = doc.getString("contactEmail") ?: "",
+                        contactPhone = doc.getString("contactPhone") ?: "",
+                        coverageArea = doc.getString("coverageArea") ?: ""
+                    )
+                    _profile.value = profile
+                    _state.value = OperatorState.ProfileLoaded(profile)
+                    loadOperatorLines(doc.id)
+                } else {
+                    _state.value = OperatorState.Idle
+                }
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed")
+            }
+        }
+    }
+
+    // Зачувај профил
+    fun saveOperatorProfile(
+        companyName: String,
+        description: String,
+        contactEmail: String,
+        contactPhone: String,
+        coverageArea: String
+    ) {
+        viewModelScope.launch {
+            _state.value = OperatorState.Loading
+            try {
+                val uid = auth.currentUser?.uid ?: return@launch
+                val data = hashMapOf(
+                    "uid" to uid,
+                    "companyName" to companyName,
+                    "description" to description,
+                    "contactEmail" to contactEmail,
+                    "contactPhone" to contactPhone,
+                    "coverageArea" to coverageArea,
+                    "logoUrl" to ""
+                )
+
+                val existing = firestore.collection("operators")
+                    .whereEqualTo("uid", uid).get().await()
+
+                if (existing.isEmpty) {
+                    firestore.collection("operators").add(data).await()
+                } else {
+                    firestore.collection("operators")
+                        .document(existing.documents[0].id)
+                        .set(data).await()
+                }
+                _state.value = OperatorState.SaveSuccess
+                loadOperatorProfile()
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed to save")
+            }
+        }
+    }
+
+    // Вчитај линии на операторот
+    fun loadOperatorLines(operatorId: String) {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("lines")
+                    .whereEqualTo("operatorId", operatorId)
+                    .get().await()
+
+                val lines = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        BusLine(
+                            lineId = doc.id,
+                            operatorId = doc.getString("operatorId") ?: "",
+                            lineNumber = doc.getString("lineNumber") ?: "",
+                            lineName = doc.getString("lineName") ?: "",
+                            lineType = try {
+                                LineType.valueOf(doc.getString("lineType") ?: "BUS")
+                            } catch (e: Exception) { LineType.BUS },
+                            startStop = doc.getString("startStop") ?: "",
+                            endStop = doc.getString("endStop") ?: "",
+                            isActive = doc.getBoolean("isActive") ?: true,
+                            averageRating = doc.getDouble("averageRating")?.toFloat() ?: 0f,
+                            ratingCount = doc.getLong("ratingCount")?.toInt() ?: 0
+                        )
+                    } catch (e: Exception) { null }
+                }
+                _lines.value = lines
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    // Создај нова линија
+    fun createLine(
+        lineNumber: String,
+        lineName: String,
+        lineType: LineType,
+        startStop: String,
+        endStop: String
+    ) {
+        viewModelScope.launch {
+            _state.value = OperatorState.Loading
+            try {
+                val operatorId = _profile.value?.operatorId ?: return@launch
+                val line = hashMapOf(
+                    "operatorId" to operatorId,
+                    "lineNumber" to lineNumber,
+                    "lineName" to lineName,
+                    "lineType" to lineType.name,
+                    "startStop" to startStop,
+                    "endStop" to endStop,
+                    "isActive" to true,
+                    "averageRating" to 0.0,
+                    "ratingCount" to 0
+                )
+                firestore.collection("lines").add(line).await()
+                _state.value = OperatorState.SaveSuccess
+                loadOperatorLines(operatorId)
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed to create line")
+            }
+        }
+    }
+
+    // Избриши линија
+    fun deleteLine(lineId: String) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("lines").document(lineId).delete().await()
+                val operatorId = _profile.value?.operatorId ?: return@launch
+                loadOperatorLines(operatorId)
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed to delete")
+            }
+        }
+    }
+}

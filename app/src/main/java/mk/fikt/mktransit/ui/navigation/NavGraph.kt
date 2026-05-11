@@ -21,6 +21,7 @@ import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
 import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.messages.ChatScreen
 import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
+import mk.fikt.mktransit.ui.screens.operator.OperatorDashboardScreen
 
 @Composable
 fun NavGraph(
@@ -103,7 +104,8 @@ fun NavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onOperatorClick = { navController.navigate(NavRoutes.OPERATOR_DASHBOARD) }
             )
         }
 
@@ -173,6 +175,12 @@ fun NavGraph(
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             ChatScreen(
                 conversationId = conversationId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.OPERATOR_DASHBOARD) {
+            OperatorDashboardScreen(
                 onBack = { navController.popBackStack() }
             )
         }

@@ -27,6 +27,7 @@ import mk.fikt.mktransit.viewmodel.AuthViewModel
 fun ProfileScreen(
     onLogout: () -> Unit,
     onBack: () -> Unit,
+    onOperatorClick: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
@@ -37,7 +38,6 @@ fun ProfileScreen(
         if (authState is AuthState.Idle && hasLoggedOut) onLogout()
     }
 
-    // Logout диjалог
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -93,7 +93,6 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Avatar
                     Box(
                         modifier = Modifier
                             .size(80.dp)
@@ -158,7 +157,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Settings секција
+            // Settings Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -181,6 +180,13 @@ fun ProfileScreen(
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
+                        icon = Icons.Filled.Business,
+                        title = "Operator Dashboard",
+                        subtitle = "Manage your bus lines",
+                        onClick = onOperatorClick
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                    ProfileMenuItem(
                         icon = Icons.Filled.Language,
                         title = "Language",
                         subtitle = "Macedonian / English",
@@ -198,7 +204,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Logout копче
+            // Logout Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
