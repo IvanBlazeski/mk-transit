@@ -18,6 +18,7 @@ sealed class TicketState {
     object Idle : TicketState()
     object Loading : TicketState()
     data class Success(val tickets: List<TicketEntity>) : TicketState()
+    data class SingleTicket(val ticket: TicketEntity) : TicketState()
     data class PurchaseSuccess(val ticketId: String) : TicketState()
     data class Error(val message: String) : TicketState()
 }
@@ -33,7 +34,6 @@ class TicketViewModel @Inject constructor(
     private val _ticketState = MutableStateFlow<TicketState>(TicketState.Idle)
     val ticketState: StateFlow<TicketState> = _ticketState
 
-    // Вчитај ги тикетите на корисникот
     fun loadMyTickets() {
         viewModelScope.launch {
             val uid = auth.currentUser?.uid ?: return@launch
@@ -43,7 +43,22 @@ class TicketViewModel @Inject constructor(
         }
     }
 
-    // Купи тикет (без Stripe за сега — симулација)
+    fun loadTicketById(ticketId: String) {
+        viewModelScope.launch {
+            _ticketState.value = TicketState.Loading
+            try {
+                val ticket = ticketDao.getTicketById(ticketId)
+                if (ticket != null) {
+                    _ticketState.value = TicketState.SingleTicket(ticket)
+                } else {
+                    _ticketState.value = TicketState.Error("Ticket not found")
+                }
+            } catch (e: Exception) {
+                _ticketState.value = TicketState.Error(e.message ?: "Error")
+            }
+        }
+    }
+
     fun purchaseTicket(
         lineId: String,
         lineName: String,
@@ -58,13 +73,12 @@ class TicketViewModel @Inject constructor(
                 val ticketId = UUID.randomUUID().toString()
                 val now = System.currentTimeMillis()
                 val validUntil = when (ticketType) {
-                    "SINGLE" -> now + (2 * 60 * 60 * 1000) // 2 часа
-                    "DAILY" -> now + (24 * 60 * 60 * 1000) // 1 ден
-                    "WEEKLY" -> now + (7 * 24 * 60 * 60 * 1000) // 7 дена
+                    "SINGLE" -> now + (2 * 60 * 60 * 1000)
+                    "DAILY" -> now + (24 * 60 * 60 * 1000)
+                    "WEEKLY" -> now + (7 * 24 * 60 * 60 * 1000)
                     else -> now + (2 * 60 * 60 * 1000)
                 }
 
-                // QR содржина
                 val qrContent = "MKTRANSIT|$ticketId|$lineId|$uid|$now"
 
                 val ticket = TicketEntity(
@@ -81,10 +95,8 @@ class TicketViewModel @Inject constructor(
                     validUntil = validUntil
                 )
 
-                // Зачувај локално (Room)
                 ticketDao.insertTicket(ticket)
 
-                // Зачувај во Firestore
                 val firestoreTicket = hashMapOf(
                     "ticketId" to ticketId,
                     "userId" to uid,

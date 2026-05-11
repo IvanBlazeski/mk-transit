@@ -16,6 +16,8 @@ import mk.fikt.mktransit.ui.screens.auth.WelcomeScreen
 import mk.fikt.mktransit.ui.screens.home.HomeScreen
 import mk.fikt.mktransit.ui.screens.lines.LineDetailScreen
 import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
+import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
+import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
 
 @Composable
 fun NavGraph(
@@ -114,6 +116,35 @@ fun NavGraph(
             )
         }
 
+        composable(
+            route = NavRoutes.TICKET_PURCHASE,
+            arguments = listOf(navArgument("lineId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val lineId = backStackEntry.arguments?.getString("lineId") ?: ""
+            TicketPurchaseScreen(
+                lineId = lineId,
+                lineName = "Bus Line",
+                lineNumber = "1",
+                onBack = { navController.popBackStack() },
+                onPurchaseSuccess = { ticketId ->
+                    navController.navigate(NavRoutes.qrTicket(ticketId)) {
+                        popUpTo(NavRoutes.HOME)
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = NavRoutes.QR_TICKET,
+            arguments = listOf(navArgument("ticketId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val ticketId = backStackEntry.arguments?.getString("ticketId") ?: ""
+            QRTicketScreen(
+                ticketId = ticketId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(NavRoutes.MAP) {
             Text("Map — Coming Soon!")
         }
@@ -124,10 +155,6 @@ fun NavGraph(
 
         composable(NavRoutes.MESSAGES) {
             Text("Messages — Coming Soon!")
-        }
-
-        composable(NavRoutes.TICKET_PURCHASE) {
-            Text("Ticket Purchase — Coming Soon!")
         }
     }
 }
