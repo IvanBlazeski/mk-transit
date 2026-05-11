@@ -19,6 +19,8 @@ import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
 import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
+import mk.fikt.mktransit.ui.screens.messages.ChatScreen
+import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
 
 @Composable
 fun NavGraph(
@@ -155,12 +157,28 @@ fun NavGraph(
             )
         }
 
-        composable(NavRoutes.MAP) {
-            Text("Map — Coming Soon!")
+        composable(NavRoutes.MESSAGES) {
+            MessagesScreen(
+                onBack = { navController.popBackStack() },
+                onConversationClick = { conversationId ->
+                    navController.navigate(NavRoutes.chat(conversationId))
+                }
+            )
         }
 
-        composable(NavRoutes.MESSAGES) {
-            Text("Messages — Coming Soon!")
+        composable(
+            route = NavRoutes.CHAT,
+            arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            ChatScreen(
+                conversationId = conversationId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.MAP) {
+            Text("Map — Coming Soon!")
         }
     }
 }
