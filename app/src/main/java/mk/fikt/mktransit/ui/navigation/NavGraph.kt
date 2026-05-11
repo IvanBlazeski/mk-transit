@@ -1,13 +1,17 @@
 package mk.fikt.mktransit.ui.navigation
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import mk.fikt.mktransit.ui.screens.auth.ForgotPasswordScreen
 import mk.fikt.mktransit.ui.screens.auth.LoginScreen
 import mk.fikt.mktransit.ui.screens.auth.RegisterScreen
+import mk.fikt.mktransit.ui.screens.auth.RoleSelectionScreen
 import mk.fikt.mktransit.ui.screens.auth.WelcomeScreen
+import mk.fikt.mktransit.ui.screens.home.HomeScreen
 
 @Composable
 fun NavGraph(
@@ -17,17 +21,19 @@ fun NavGraph(
         navController = navController,
         startDestination = NavRoutes.WELCOME
     ) {
-        // Welcome
         composable(NavRoutes.WELCOME) {
             WelcomeScreen(
                 onEmailClick = { navController.navigate(NavRoutes.LOGIN) },
                 onGoogleClick = { /* подоцна */ },
                 onFacebookClick = { /* подоцна */ },
-                onAnonymousClick = { navController.navigate(NavRoutes.HOME) }
+                onAnonymousClick = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                    }
+                }
             )
         }
 
-        // Login
         composable(NavRoutes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
@@ -41,7 +47,6 @@ fun NavGraph(
             )
         }
 
-        // Register
         composable(NavRoutes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = {
@@ -54,19 +59,33 @@ fun NavGraph(
             )
         }
 
-        // Placeholder за Home (привремено)
-        composable(NavRoutes.HOME) {
-            androidx.compose.material3.Text("Home Screen — Coming Soon!")
-        }
-
-        // Placeholder за Role Selection
-        composable(NavRoutes.ROLE_SELECTION) {
-            androidx.compose.material3.Text("Role Selection — Coming Soon!")
-        }
-
-        // Placeholder за Forgot Password
         composable(NavRoutes.FORGOT_PASSWORD) {
-            androidx.compose.material3.Text("Forgot Password — Coming Soon!")
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.ROLE_SELECTION) {
+            RoleSelectionScreen(
+                onRoleSelected = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.ROLE_SELECTION) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Placeholder за Home
+        composable(NavRoutes.HOME) {
+            HomeScreen(
+                onLineClick = { lineId ->
+                    navController.navigate(NavRoutes.lineDetail(lineId))
+                },
+                onMapClick = { navController.navigate(NavRoutes.MAP) },
+                onTicketsClick = { navController.navigate(NavRoutes.TICKETS) },
+                onMessagesClick = { navController.navigate(NavRoutes.MESSAGES) },
+                onProfileClick = { navController.navigate(NavRoutes.PROFILE) }
+            )
         }
     }
 }
