@@ -12,6 +12,7 @@ import mk.fikt.mktransit.ui.screens.auth.RegisterScreen
 import mk.fikt.mktransit.ui.screens.auth.RoleSelectionScreen
 import mk.fikt.mktransit.ui.screens.auth.WelcomeScreen
 import mk.fikt.mktransit.ui.screens.home.HomeScreen
+import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 
 @Composable
 fun NavGraph(
@@ -24,8 +25,8 @@ fun NavGraph(
         composable(NavRoutes.WELCOME) {
             WelcomeScreen(
                 onEmailClick = { navController.navigate(NavRoutes.LOGIN) },
-                onGoogleClick = { /* подоцна */ },
-                onFacebookClick = { /* подоцна */ },
+                onGoogleClick = { },
+                onFacebookClick = { },
                 onAnonymousClick = {
                     navController.navigate(NavRoutes.HOME) {
                         popUpTo(NavRoutes.WELCOME) { inclusive = true }
@@ -75,7 +76,6 @@ fun NavGraph(
             )
         }
 
-        // Placeholder за Home
         composable(NavRoutes.HOME) {
             HomeScreen(
                 onLineClick = { lineId ->
@@ -86,6 +86,33 @@ fun NavGraph(
                 onMessagesClick = { navController.navigate(NavRoutes.MESSAGES) },
                 onProfileClick = { navController.navigate(NavRoutes.PROFILE) }
             )
+        }
+
+        composable(NavRoutes.PROFILE) {
+            ProfileScreen(
+                onLogout = {
+                    navController.navigate(NavRoutes.WELCOME) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.MAP) {
+            Text("Map — Coming Soon!")
+        }
+
+        composable(NavRoutes.TICKETS) {
+            Text("Tickets — Coming Soon!")
+        }
+
+        composable(NavRoutes.MESSAGES) {
+            Text("Messages — Coming Soon!")
+        }
+
+        composable(NavRoutes.LINE_DETAIL) {
+            Text("Line Detail — Coming Soon!")
         }
     }
 }
