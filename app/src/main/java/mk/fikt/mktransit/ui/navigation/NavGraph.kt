@@ -22,6 +22,7 @@ import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.messages.ChatScreen
 import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
 import mk.fikt.mktransit.ui.screens.operator.OperatorDashboardScreen
+import mk.fikt.mktransit.ui.screens.home.MapScreen
 
 @Composable
 fun NavGraph(
@@ -186,7 +187,9 @@ fun NavGraph(
         }
 
         composable(NavRoutes.MAP) {
-            Text("Map — Coming Soon!")
+            MapScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
