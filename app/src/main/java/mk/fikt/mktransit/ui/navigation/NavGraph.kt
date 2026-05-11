@@ -18,6 +18,7 @@ import mk.fikt.mktransit.ui.screens.lines.LineDetailScreen
 import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
+import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 
 @Composable
 fun NavGraph(
@@ -145,12 +146,17 @@ fun NavGraph(
             )
         }
 
-        composable(NavRoutes.MAP) {
-            Text("Map — Coming Soon!")
+        composable(NavRoutes.TICKETS) {
+            MyTicketsScreen(
+                onBack = { navController.popBackStack() },
+                onTicketClick = { ticketId ->
+                    navController.navigate(NavRoutes.qrTicket(ticketId))
+                }
+            )
         }
 
-        composable(NavRoutes.TICKETS) {
-            Text("Tickets — Coming Soon!")
+        composable(NavRoutes.MAP) {
+            Text("Map — Coming Soon!")
         }
 
         composable(NavRoutes.MESSAGES) {
