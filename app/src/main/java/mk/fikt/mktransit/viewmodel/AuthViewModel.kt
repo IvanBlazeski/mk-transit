@@ -139,8 +139,15 @@ class AuthViewModel @Inject constructor() : ViewModel() {
     }
 
     // ── LOGOUT ────────────────────────────────────────────────────
-    fun logout() {
+    fun logout(context: android.content.Context) {
         auth.signOut()
+        // Одјави се и од Google
+        val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions
+            .Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .build()
+        com.google.android.gms.auth.api.signin.GoogleSignIn
+            .getClient(context, gso)
+            .signOut()
         _authState.value = AuthState.Idle
     }
 
@@ -181,7 +188,7 @@ class AuthViewModel @Inject constructor() : ViewModel() {
     fun getGoogleSignInClient(context: Context) = GoogleSignIn.getClient(
         context,
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("YOUR_WEB_CLIENT_ID") // ← ова го менуваме подоцна
+            .requestIdToken("262264957123-3b0jio1olkb2678770n66rhqcflb2f1h.apps.googleusercontent.com")
             .requestEmail()
             .build()
     )

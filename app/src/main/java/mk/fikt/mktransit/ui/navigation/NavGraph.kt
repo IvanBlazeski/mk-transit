@@ -44,6 +44,11 @@ fun NavGraph(
                         popUpTo(NavRoutes.WELCOME) { inclusive = true }
                     }
                 },
+                onLoginSuccess = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                    }
+                },
                 isTablet = isTablet
             )
         }

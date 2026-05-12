@@ -30,6 +30,7 @@ fun ProfileScreen(
     onOperatorClick: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var hasLoggedOut by remember { mutableStateOf(false) }
@@ -47,7 +48,7 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     showLogoutDialog = false
                     hasLoggedOut = true
-                    viewModel.logout()
+                    viewModel.logout(context)
                 }) {
                     Text("Logout", color = MaterialTheme.colorScheme.error)
                 }
