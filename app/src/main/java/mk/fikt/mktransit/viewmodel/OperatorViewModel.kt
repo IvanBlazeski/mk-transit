@@ -117,7 +117,6 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             try {
                 val snapshot = firestore.collection("lines")
-                    .whereEqualTo("operatorId", operatorId)
                     .get().await()
 
                 val lines = snapshot.documents.mapNotNull { doc ->

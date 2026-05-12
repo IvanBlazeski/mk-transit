@@ -1,5 +1,6 @@
 package mk.fikt.mktransit.ui.navigation
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,6 +18,7 @@ import mk.fikt.mktransit.ui.screens.home.MapScreen
 import mk.fikt.mktransit.ui.screens.lines.LineDetailScreen
 import mk.fikt.mktransit.ui.screens.messages.ChatScreen
 import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
+import mk.fikt.mktransit.ui.screens.operator.DriverModeScreen
 import mk.fikt.mktransit.ui.screens.operator.OperatorDashboardScreen
 import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
@@ -112,6 +114,24 @@ fun NavGraph(
             )
         }
 
+        composable(NavRoutes.OPERATOR_DASHBOARD) {
+            OperatorDashboardScreen(
+                onBack = { navController.popBackStack() },
+                onDriverMode = { navController.navigate(NavRoutes.DRIVER_MODE) }
+            )
+        }
+
+        composable(NavRoutes.DRIVER_MODE) {
+            DriverModeScreen(
+                onBack = { navController.popBackStack() },
+                onScanQR = { navController.navigate(NavRoutes.QR_SCANNER) }
+            )
+        }
+
+        composable(NavRoutes.QR_SCANNER) {
+            Text("QR Scanner — Coming Soon!")
+        }
+
         composable(
             route = NavRoutes.LINE_DETAIL,
             arguments = listOf(navArgument("lineId") { type = NavType.StringType })
@@ -184,12 +204,6 @@ fun NavGraph(
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             ChatScreen(
                 conversationId = conversationId,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavRoutes.OPERATOR_DASHBOARD) {
-            OperatorDashboardScreen(
                 onBack = { navController.popBackStack() }
             )
         }
