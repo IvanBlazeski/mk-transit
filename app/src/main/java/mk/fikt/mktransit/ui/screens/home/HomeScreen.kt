@@ -3,6 +3,10 @@ package mk.fikt.mktransit.ui.screens.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -27,7 +31,8 @@ fun HomeScreen(
     onMapClick: () -> Unit,
     onTicketsClick: () -> Unit,
     onMessagesClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    isTablet: Boolean = false
 ) {
     val lineViewModel: LineViewModel = hiltViewModel()
     val lineState by lineViewModel.lineState.collectAsStateWithLifecycle()
@@ -88,7 +93,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { lineViewModel.updateSearch(it) },
@@ -101,15 +105,12 @@ fun HomeScreen(
                 singleLine = true
             )
 
-            // Content
             when (val state = lineState) {
                 is LineState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 }
 
                 is LineState.Error -> {
@@ -160,23 +161,48 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            item {
-                                Text(
-                                    text = "Bus Lines",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                )
+                        if (isTablet) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                contentPadding = PaddingValues(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                item(span = { GridItemSpan(2) }) {
+                                    Text(
+                                        text = "Bus Lines",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                                items(filtered) { line ->
+                                    BusLineCard(
+                                        line = line,
+                                        onClick = { onLineClick(line.lineId) }
+                                    )
+                                }
                             }
-                            items(filtered) { line ->
-                                BusLineCard(
-                                    line = line,
-                                    onClick = { onLineClick(line.lineId) }
-                                )
+                        } else {
+                            LazyColumn(
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                item {
+                                    Text(
+                                        text = "Bus Lines",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                                items(filtered) { line ->
+                                    BusLineCard(
+                                        line = line,
+                                        onClick = { onLineClick(line.lineId) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -201,7 +227,6 @@ fun BusLineCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Line Number Badge
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp),
@@ -259,7 +284,6 @@ fun BusLineCard(
                 }
             }
 
-            // Type badge
             Surface(
                 color = when (line.lineType) {
                     LineType.BUS -> MaterialTheme.colorScheme.primaryContainer

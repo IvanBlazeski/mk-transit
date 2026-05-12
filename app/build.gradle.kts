@@ -79,6 +79,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
+    // Window Size Class (за таблет layout)
+    implementation("androidx.compose.material3:material3-window-size-class:1.3.1")
+
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth-ktx")

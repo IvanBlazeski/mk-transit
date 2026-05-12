@@ -23,7 +23,8 @@ fun WelcomeScreen(
     onEmailClick: () -> Unit,
     onGoogleClick: () -> Unit,
     onFacebookClick: () -> Unit,
-    onAnonymousClick: () -> Unit
+    onAnonymousClick: () -> Unit,
+    isTablet: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -34,50 +35,57 @@ fun WelcomeScreen(
                 )
             )
     ) {
-        Column(
-            modifier = Modifier
+        val contentModifier = if (isTablet) {
+            Modifier
+                .fillMaxHeight()
+                .width(480.dp)
+                .align(Alignment.Center)
+                .padding(32.dp)
+        } else {
+            Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(32.dp)
+        }
+
+        Column(
+            modifier = contentModifier,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Spacer(modifier = Modifier.height(60.dp))
 
-            // Logo + Title
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     imageVector = Icons.Filled.DirectionsBus,
                     contentDescription = "MK Transit Logo",
                     tint = TextOnPrimary,
-                    modifier = Modifier.size(80.dp)
+                    modifier = Modifier.size(if (isTablet) 100.dp else 80.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = stringResource(R.string.welcome_title),
-                    fontSize = 36.sp,
+                    fontSize = if (isTablet) 48.sp else 36.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextOnPrimary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.welcome_subtitle),
-                    fontSize = 16.sp,
+                    fontSize = if (isTablet) 20.sp else 16.sp,
                     color = TextOnPrimary.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center
                 )
             }
 
-            // Buttons
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Email Button
                 Button(
                     onClick = onEmailClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TextOnPrimary,
@@ -87,16 +95,15 @@ fun WelcomeScreen(
                     Text(
                         text = stringResource(R.string.btn_login_email),
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        fontSize = if (isTablet) 18.sp else 16.sp
                     )
                 }
 
-                // Google Button
                 OutlinedButton(
                     onClick = onGoogleClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = TextOnPrimary
@@ -108,16 +115,15 @@ fun WelcomeScreen(
                     Text(
                         text = stringResource(R.string.btn_login_google),
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        fontSize = if (isTablet) 18.sp else 16.sp
                     )
                 }
 
-                // Facebook Button
                 OutlinedButton(
                     onClick = onFacebookClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = TextOnPrimary
@@ -129,11 +135,10 @@ fun WelcomeScreen(
                     Text(
                         text = stringResource(R.string.btn_login_facebook),
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        fontSize = if (isTablet) 18.sp else 16.sp
                     )
                 }
 
-                // Anonymous Button
                 TextButton(
                     onClick = onAnonymousClick,
                     modifier = Modifier.fillMaxWidth()
@@ -141,7 +146,7 @@ fun WelcomeScreen(
                     Text(
                         text = stringResource(R.string.btn_login_anonymous),
                         color = TextOnPrimary.copy(alpha = 0.75f),
-                        fontSize = 15.sp
+                        fontSize = if (isTablet) 17.sp else 15.sp
                     )
                 }
             }

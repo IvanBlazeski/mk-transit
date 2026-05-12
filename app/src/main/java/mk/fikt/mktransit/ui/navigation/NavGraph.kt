@@ -1,6 +1,5 @@
 package mk.fikt.mktransit.ui.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -14,19 +13,20 @@ import mk.fikt.mktransit.ui.screens.auth.RegisterScreen
 import mk.fikt.mktransit.ui.screens.auth.RoleSelectionScreen
 import mk.fikt.mktransit.ui.screens.auth.WelcomeScreen
 import mk.fikt.mktransit.ui.screens.home.HomeScreen
+import mk.fikt.mktransit.ui.screens.home.MapScreen
 import mk.fikt.mktransit.ui.screens.lines.LineDetailScreen
-import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
-import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
-import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
-import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.messages.ChatScreen
 import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
 import mk.fikt.mktransit.ui.screens.operator.OperatorDashboardScreen
-import mk.fikt.mktransit.ui.screens.home.MapScreen
+import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
+import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
+import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
+import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
 
 @Composable
 fun NavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    isTablet: Boolean = false
 ) {
     NavHost(
         navController = navController,
@@ -41,7 +41,8 @@ fun NavGraph(
                     navController.navigate(NavRoutes.HOME) {
                         popUpTo(NavRoutes.WELCOME) { inclusive = true }
                     }
-                }
+                },
+                isTablet = isTablet
             )
         }
 
@@ -94,7 +95,8 @@ fun NavGraph(
                 onMapClick = { navController.navigate(NavRoutes.MAP) },
                 onTicketsClick = { navController.navigate(NavRoutes.TICKETS) },
                 onMessagesClick = { navController.navigate(NavRoutes.MESSAGES) },
-                onProfileClick = { navController.navigate(NavRoutes.PROFILE) }
+                onProfileClick = { navController.navigate(NavRoutes.PROFILE) },
+                isTablet = isTablet
             )
         }
 
@@ -151,6 +153,12 @@ fun NavGraph(
             )
         }
 
+        composable(NavRoutes.MAP) {
+            MapScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(NavRoutes.TICKETS) {
             MyTicketsScreen(
                 onBack = { navController.popBackStack() },
@@ -182,12 +190,6 @@ fun NavGraph(
 
         composable(NavRoutes.OPERATOR_DASHBOARD) {
             OperatorDashboardScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavRoutes.MAP) {
-            MapScreen(
                 onBack = { navController.popBackStack() }
             )
         }
