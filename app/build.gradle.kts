@@ -94,6 +94,9 @@ dependencies {
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.3.0")
 
+    // Facebook Login
+    implementation("com.facebook.android:facebook-login:16.3.0")
+
     // Accompanist Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 

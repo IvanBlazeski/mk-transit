@@ -111,6 +111,31 @@ class AuthViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun loginWithFacebook(token: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val credential = com.google.firebase.auth.FacebookAuthProvider
+                    .getCredential(token)
+                val result = auth.signInWithCredential(credential).await()
+                val uid = result.user?.uid ?: throw Exception("No user ID")
+                val isNew = result.additionalUserInfo?.isNewUser ?: false
+                if (isNew) {
+                    createUserInFirestore(
+                        uid = uid,
+                        email = result.user?.email ?: "",
+                        name = result.user?.displayName ?: ""
+                    )
+                    _authState.value = AuthState.NeedsRoleSelection
+                } else {
+                    loadUserFromFirestore(uid)
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Facebook login failed")
+            }
+        }
+    }
+
     // ── FORGOT PASSWORD ───────────────────────────────────────────
     fun sendPasswordReset(email: String) {
         viewModelScope.launch {

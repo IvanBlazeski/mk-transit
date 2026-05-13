@@ -25,6 +25,9 @@
     <string name="role_operator">Управувам како оператор</string>
     <string name="role_both">И двете</string>
     <string name="default_web_client_id">262264957123-3b0jio1olkb2678770n66rhqcflb2f1h.apps.googleusercontent.com</string>
+    <string name="facebook_app_id">808241605442056</string>
+    <string name="fb_login_protocol_scheme">fb808241605442056</string>
+    <string name="facebook_client_token">6726dc0f39e4ceda6a6838b47fbd841b</string>
 
     <!-- Errors -->
     <string name="error_empty_email">Внесете го вашиот емаил</string>

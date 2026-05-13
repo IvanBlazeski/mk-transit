@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -44,43 +45,50 @@ fun WelcomeScreen(
     val context = LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
 
+    // Google Sign-In Launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        android.util.Log.d("GoogleLogin", "Result code: ${result.resultCode}")
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                android.util.Log.d("GoogleLogin", "Token: ${account.idToken}")
                 account.idToken?.let { token ->
                     viewModel.loginWithGoogle(token)
                 }
             } catch (e: ApiException) {
-                android.util.Log.e("GoogleLogin", "ApiException: ${e.statusCode} - ${e.message}")
+                android.util.Log.e("GoogleLogin", "Error: ${e.message}")
             }
-        } else {
-            android.util.Log.e("GoogleLogin", "Result NOT OK: ${result.resultCode}")
         }
     }
 
+    // Facebook
+    val callbackManager = remember {
+        com.facebook.CallbackManager.Factory.create()
+    }
+
+    val facebookCallback = remember {
+        object : com.facebook.FacebookCallback<com.facebook.login.LoginResult> {
+            override fun onSuccess(result: com.facebook.login.LoginResult) {
+                viewModel.loginWithFacebook(result.accessToken.token)
+            }
+            override fun onCancel() {}
+            override fun onError(error: com.facebook.FacebookException) {
+                android.util.Log.e("Facebook", "Error: ${error.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        com.facebook.login.LoginManager.getInstance()
+            .registerCallback(callbackManager, facebookCallback)
+    }
+
     LaunchedEffect(authState) {
-        android.util.Log.d("WelcomeScreen", "AuthState changed: $authState")
         when (authState) {
-            is AuthState.Success -> {
-                android.util.Log.d("WelcomeScreen", "SUCCESS - navigating to home")
-                onLoginSuccess()
-            }
-            is AuthState.NeedsRoleSelection -> {
-                android.util.Log.d("WelcomeScreen", "NEEDS ROLE - navigating to home")
-                onLoginSuccess()
-            }
-            is AuthState.Error -> {
-                android.util.Log.e("WelcomeScreen", "ERROR: ${(authState as AuthState.Error).message}")
-            }
-            else -> {
-                android.util.Log.d("WelcomeScreen", "Other state: $authState")
-            }
+            is AuthState.Success -> onLoginSuccess()
+            is AuthState.NeedsRoleSelection -> onLoginSuccess()
+            else -> {}
         }
     }
 
@@ -139,6 +147,7 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Email
                 Button(
                     onClick = onEmailClick,
                     modifier = Modifier
@@ -157,6 +166,7 @@ fun WelcomeScreen(
                     )
                 }
 
+                // Google
                 OutlinedButton(
                     onClick = {
                         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -184,8 +194,15 @@ fun WelcomeScreen(
                     )
                 }
 
+                // Facebook
                 OutlinedButton(
-                    onClick = onFacebookClick,
+                    onClick = {
+                        com.facebook.login.LoginManager.getInstance()
+                            .logInWithReadPermissions(
+                                context as androidx.activity.result.ActivityResultRegistryOwner,                                callbackManager,
+                                listOf("public_profile")
+                            )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(if (isTablet) 60.dp else 52.dp),
@@ -204,6 +221,7 @@ fun WelcomeScreen(
                     )
                 }
 
+                // Anonymous
                 TextButton(
                     onClick = onAnonymousClick,
                     modifier = Modifier.fillMaxWidth()
