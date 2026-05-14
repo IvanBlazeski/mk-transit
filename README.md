@@ -11,8 +11,7 @@
 **MK Transit** is a smart public transport Android application for North Macedonia, built with Kotlin and Jetpack Compose. It connects passengers with transport operators, enabling real-time bus tracking, digital ticket purchasing, and seamless communication.
 
 > **Academic Project** — PMP Course, FIKT, Summer Semester 2026  
-> **Student:** Ivan Blazeski  
-> **Deadline:** June 8-9, 2026
+> **Student:** Ivan Blazeski
 
 ---
 
