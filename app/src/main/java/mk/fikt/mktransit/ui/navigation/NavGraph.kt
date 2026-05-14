@@ -24,6 +24,7 @@ import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
+import mk.fikt.mktransit.ui.screens.profile.FavoritesScreen
 
 @Composable
 fun NavGraph(
@@ -50,6 +51,14 @@ fun NavGraph(
                     }
                 },
                 isTablet = isTablet
+            )
+        }
+        composable(NavRoutes.FAVORITES) {
+            FavoritesScreen(
+                onBack = { navController.popBackStack() },
+                onLineClick = { lineId ->
+                    navController.navigate(NavRoutes.lineDetail(lineId))
+                }
             )
         }
 
@@ -115,7 +124,8 @@ fun NavGraph(
                     }
                 },
                 onBack = { navController.popBackStack() },
-                onOperatorClick = { navController.navigate(NavRoutes.OPERATOR_DASHBOARD) }
+                onOperatorClick = { navController.navigate(NavRoutes.OPERATOR_DASHBOARD) },
+                onFavoritesClick = { navController.navigate(NavRoutes.FAVORITES) }
             )
         }
 

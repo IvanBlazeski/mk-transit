@@ -30,6 +30,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onBack: () -> Unit,
     onOperatorClick: () -> Unit,
+    onFavoritesClick: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -109,9 +110,7 @@ fun ProfileScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
                     when (val state = authState) {
                         is AuthState.Success -> {
                             Text(
@@ -136,10 +135,7 @@ fun ProfileScreen(
                                         UserRole.OPERATOR -> stringResource(R.string.operator)
                                         UserRole.BOTH -> stringResource(R.string.passenger_and_operator)
                                     },
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 4.dp
-                                    ),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                                     color = MaterialTheme.colorScheme.onPrimary,
                                     fontSize = 13.sp
                                 )
@@ -160,9 +156,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column {
@@ -170,7 +164,7 @@ fun ProfileScreen(
                         icon = Icons.Filled.Favorite,
                         title = stringResource(R.string.favorites),
                         subtitle = stringResource(R.string.favorites_subtitle),
-                        onClick = {}
+                        onClick = onFavoritesClick
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
@@ -206,9 +200,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 ProfileMenuItem(
@@ -233,19 +225,12 @@ fun ProfileMenuItem(
     onClick: () -> Unit,
     isDestructive: Boolean = false
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    Surface(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isDestructive) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.primary,
+                tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -253,20 +238,11 @@ fun ProfileMenuItem(
                 Text(
                     text = title,
                     fontWeight = FontWeight.Medium,
-                    color = if (isDestructive) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+                    color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = subtitle,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                Text(text = subtitle, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
-            Icon(
-                Icons.Filled.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-            )
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
         }
     }
 }
