@@ -46,6 +46,10 @@
     <string name="show_qr_to_driver">Покажи го QR кодот на возачот</string>
     <string name="ticket_not_found">Билетот не е пронајден</string>
     <string name="contact_operator">Контактирај оператор</string>
+    <string name="manage_stops">Управувај со стопови</string>
+    <string name="add_stop">Додај стоп</string>
+    <string name="stop_name">Ime на стоп</string>
+    <string name="minutes_from_start">Минути од почетокот</string>
 
     <!-- Errors -->
     <string name="error_empty_email">Внесете го вашиот емаил</string>

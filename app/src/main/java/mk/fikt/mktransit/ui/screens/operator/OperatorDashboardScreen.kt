@@ -36,6 +36,7 @@ fun OperatorDashboardScreen(
     var showCreateLineDialog by remember { mutableStateOf(false) }
     var showCreateProfileDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
+    var showStopsDialog by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) { viewModel.loadOperatorProfile() }
 
@@ -86,6 +87,14 @@ fun OperatorDashboardScreen(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+
+    showStopsDialog?.let { lineId ->
+        StopsDialog(
+            lineId = lineId,
+            viewModel = viewModel,
+            onDismiss = { showStopsDialog = null }
         )
     }
 
@@ -147,28 +156,12 @@ fun OperatorDashboardScreen(
                             modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Filled.Business,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Icon(Icons.Filled.Business, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(R.string.setup_profile),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            )
-                            Text(
-                                text = stringResource(R.string.setup_profile_subtitle),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                fontSize = 14.sp
-                            )
+                            Text(text = stringResource(R.string.setup_profile), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(text = stringResource(R.string.setup_profile_subtitle), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { showCreateProfileDialog = true },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
+                            Button(onClick = { showCreateProfileDialog = true }, shape = RoundedCornerShape(12.dp)) {
                                 Text(stringResource(R.string.create_profile))
                             }
                         }
@@ -177,48 +170,22 @@ fun OperatorDashboardScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.size(52.dp)
-                            ) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(52.dp)) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Filled.Business,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(28.dp)
-                                    )
+                                    Icon(Icons.Filled.Business, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp))
                                 }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                Text(
-                                    text = profile!!.companyName,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = profile!!.coverageArea,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
+                                Text(text = profile!!.companyName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                Text(text = profile!!.coverageArea, fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                             }
                             Spacer(modifier = Modifier.weight(1f))
                             IconButton(onClick = { showCreateProfileDialog = true }) {
-                                Icon(
-                                    Icons.Filled.Edit,
-                                    contentDescription = "Edit",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                                Icon(Icons.Filled.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -227,56 +194,24 @@ fun OperatorDashboardScreen(
 
             if (profile != null) {
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            title = stringResource(R.string.total_lines),
-                            value = lines.size.toString(),
-                            icon = Icons.Filled.DirectionsBus
-                        )
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            title = stringResource(R.string.active_lines),
-                            value = lines.count { it.isActive }.toString(),
-                            icon = Icons.Filled.CheckCircle
-                        )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StatCard(modifier = Modifier.weight(1f), title = stringResource(R.string.total_lines), value = lines.size.toString(), icon = Icons.Filled.DirectionsBus)
+                        StatCard(modifier = Modifier.weight(1f), title = stringResource(R.string.active_lines), value = lines.count { it.isActive }.toString(), icon = Icons.Filled.CheckCircle)
                     }
                 }
 
                 item {
-                    Text(
-                        text = stringResource(R.string.your_lines),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                    Text(text = stringResource(R.string.your_lines), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
 
                 if (lines.isEmpty()) {
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(
-                                    Icons.Filled.DirectionsBus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                                )
+                            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Filled.DirectionsBus, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = stringResource(R.string.no_lines_yet),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
-                                Text(
-                                    text = stringResource(R.string.tap_to_add),
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                )
+                                Text(text = stringResource(R.string.no_lines_yet), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                Text(text = stringResource(R.string.tap_to_add), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                             }
                         }
                     }
@@ -284,13 +219,94 @@ fun OperatorDashboardScreen(
                     items(lines) { line ->
                         OperatorLineCard(
                             line = line,
-                            onDelete = { showDeleteDialog = line.lineId }
+                            onDelete = { showDeleteDialog = line.lineId },
+                            onManageStops = {
+                                showStopsDialog = line.lineId
+                                viewModel.loadStops(line.lineId)
+                            }
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun StopsDialog(
+    lineId: String,
+    viewModel: OperatorViewModel,
+    onDismiss: () -> Unit
+) {
+    val stops by viewModel.stops.collectAsStateWithLifecycle()
+    var newStopName by remember { mutableStateOf("") }
+    var newStopMinutes by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.manage_stops)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (stops.isEmpty()) {
+                    Text(stringResource(R.string.no_stops), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                } else {
+                    stops.forEach { stop ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = stop.stopName, fontWeight = FontWeight.Medium)
+                                if (stop.minutesFromStart > 0) {
+                                    Text(text = "+${stop.minutesFromStart} min", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                                }
+                            }
+                            IconButton(onClick = { viewModel.deleteStop(lineId, stop.stopId) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(stringResource(R.string.add_stop), fontWeight = FontWeight.SemiBold)
+
+                OutlinedTextField(
+                    value = newStopName,
+                    onValueChange = { newStopName = it },
+                    label = { Text(stringResource(R.string.stop_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = newStopMinutes,
+                    onValueChange = { newStopMinutes = it },
+                    label = { Text(stringResource(R.string.minutes_from_start)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+                Button(
+                    onClick = {
+                        if (newStopName.isNotBlank()) {
+                            viewModel.addStop(lineId, newStopName, newStopMinutes.toIntOrNull() ?: 0)
+                            newStopName = ""
+                            newStopMinutes = ""
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_stop))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) }
+        }
+    )
 }
 
 @Composable
@@ -301,10 +317,7 @@ fun StatCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
     Card(modifier = modifier, shape = RoundedCornerShape(16.dp)) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -314,7 +327,11 @@ fun StatCard(
 }
 
 @Composable
-fun OperatorLineCard(line: BusLine, onDelete: () -> Unit) {
+fun OperatorLineCard(
+    line: BusLine,
+    onDelete: () -> Unit,
+    onManageStops: () -> Unit = {}
+) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(48.dp)) {
@@ -337,6 +354,9 @@ fun OperatorLineCard(line: BusLine, onDelete: () -> Unit) {
                     fontSize = 11.sp,
                     color = if (line.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
+            }
+            IconButton(onClick = onManageStops) {
+                Icon(Icons.Filled.Place, contentDescription = "Stops", tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)

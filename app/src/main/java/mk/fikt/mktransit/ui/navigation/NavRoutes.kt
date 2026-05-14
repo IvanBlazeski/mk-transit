@@ -32,6 +32,7 @@ object NavRoutes {
     const val DRIVER_MODE = "driver_mode"
     const val QR_SCANNER = "qr_scanner"
 
+
     // Helpers
     fun lineDetail(lineId: String) = "line_detail/$lineId"
     fun ticketPurchase(lineId: String) = "ticket_purchase/$lineId"

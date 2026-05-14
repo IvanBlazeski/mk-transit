@@ -188,4 +188,71 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
+
+    // Вчитај стопови на линија
+    private val _stops = MutableStateFlow<List<mk.fikt.mktransit.domain.model.Stop>>(emptyList())
+    val stops: StateFlow<List<mk.fikt.mktransit.domain.model.Stop>> = _stops
+
+    fun loadStops(lineId: String) {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("lines")
+                    .document(lineId)
+                    .collection("stops")
+                    .orderBy("stopOrder")
+                    .get().await()
+
+                val stops = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        mk.fikt.mktransit.domain.model.Stop(
+                            stopId = doc.id,
+                            stopName = doc.getString("stopName") ?: "",
+                            stopOrder = doc.getLong("order")?.toInt() ?: 0,
+                            minutesFromStart = doc.getLong("minutesFromStart")?.toInt() ?: 0,
+                            latitude = doc.getDouble("latitude") ?: 0.0,
+                            longitude = doc.getDouble("longitude") ?: 0.0
+                        )
+                    } catch (e: Exception) { null }
+                }
+                _stops.value = stops
+            } catch (e: Exception) { }
+        }
+    }
+
+    fun addStop(lineId: String, stopName: String, minutesFromStart: Int) {
+        viewModelScope.launch {
+            try {
+                val order = _stops.value.size
+                val stop = hashMapOf(
+                    "stopName" to stopName,
+                    "stopOrder" to order,
+                    "minutesFromStart" to minutesFromStart,
+                    "latitude" to 0.0,
+                    "longitude" to 0.0
+                )
+                firestore.collection("lines")
+                    .document(lineId)
+                    .collection("stops")
+                    .add(stop).await()
+                _state.value = OperatorState.SaveSuccess
+                loadStops(lineId)
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed to add stop")
+            }
+        }
+    }
+
+    fun deleteStop(lineId: String, stopId: String) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("lines")
+                    .document(lineId)
+                    .collection("stops")
+                    .document(stopId)
+                    .delete().await()
+                loadStops(lineId)
+            } catch (e: Exception) { }
+        }
+    }
+
 }

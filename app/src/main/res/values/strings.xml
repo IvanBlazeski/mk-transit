@@ -46,6 +46,10 @@
     <string name="show_qr_to_driver">Show this QR code to the driver</string>
     <string name="ticket_not_found">Ticket not found</string>
     <string name="contact_operator">Contact Operator</string>
+    <string name="manage_stops">Manage Stops</string>
+    <string name="add_stop">Add Stop</string>
+    <string name="stop_name">Stop Name</string>
+    <string name="minutes_from_start">Minutes from start</string>
 
     <!-- Errors -->
     <string name="error_empty_email">Please enter your email</string>
