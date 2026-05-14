@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -17,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.viewmodel.AuthState
 import mk.fikt.mktransit.viewmodel.AuthViewModel
 
@@ -26,6 +29,7 @@ fun ForgotPasswordScreen(
     onBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     var email by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf("") }
@@ -33,14 +37,14 @@ fun ForgotPasswordScreen(
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Idle && successMessage.isEmpty().not()) {
-            successMessage = "Password reset email sent! Check your inbox."
+            successMessage = context.getString(R.string.reset_password_sent)
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reset Password") },
+                title = { Text(stringResource(R.string.reset_password)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -60,7 +64,7 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
-                text = "Forgot your password?",
+                text = stringResource(R.string.forgot_password_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -69,7 +73,7 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Enter your email address and we'll send you a link to reset your password.",
+                text = stringResource(R.string.forgot_password_subtitle),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
@@ -80,7 +84,7 @@ fun ForgotPasswordScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; emailError = "" },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.label_email)) },
                 leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                 isError = emailError.isNotEmpty(),
                 supportingText = { if (emailError.isNotEmpty()) Text(emailError) },
@@ -92,7 +96,6 @@ fun ForgotPasswordScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Success порака
             if (successMessage.isNotEmpty()) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -110,7 +113,6 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Error порака
             if (authState is AuthState.Error) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -130,36 +132,27 @@ fun ForgotPasswordScreen(
             Button(
                 onClick = {
                     if (email.isBlank()) {
-                        emailError = "Please enter your email"
+                        emailError = context.getString(R.string.error_empty_email)
                     } else {
                         successMessage = "sent"
                         viewModel.sendPasswordReset(email)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 enabled = authState !is AuthState.Loading
             ) {
                 if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text(
-                        "Send Reset Link",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text(stringResource(R.string.send_reset_link), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             TextButton(onClick = onBack) {
-                Text("Back to Login")
+                Text(stringResource(R.string.back_to_login))
             }
         }
     }

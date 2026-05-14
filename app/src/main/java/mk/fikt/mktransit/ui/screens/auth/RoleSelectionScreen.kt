@@ -12,12 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.UserRole
 import mk.fikt.mktransit.viewmodel.AuthState
 import mk.fikt.mktransit.viewmodel.AuthViewModel
@@ -51,7 +53,7 @@ fun RoleSelectionScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "How will you use MK Transit?",
+            text = stringResource(R.string.role_selection_title),
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -61,7 +63,7 @@ fun RoleSelectionScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "You can change this later in settings",
+            text = stringResource(R.string.role_selection_subtitle),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
@@ -69,11 +71,10 @@ fun RoleSelectionScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Role Cards
         RoleCard(
             icon = Icons.Filled.Person,
-            title = "Passenger",
-            description = "Browse lines, buy tickets, track buses",
+            title = stringResource(R.string.role_passenger),
+            description = stringResource(R.string.role_passenger_desc),
             isSelected = selectedRole == UserRole.PASSENGER,
             onClick = { selectedRole = UserRole.PASSENGER }
         )
@@ -82,8 +83,8 @@ fun RoleSelectionScreen(
 
         RoleCard(
             icon = Icons.Filled.Business,
-            title = "Operator",
-            description = "Manage lines, stops, and timetables",
+            title = stringResource(R.string.role_operator),
+            description = stringResource(R.string.role_operator_desc),
             isSelected = selectedRole == UserRole.OPERATOR,
             onClick = { selectedRole = UserRole.OPERATOR }
         )
@@ -92,8 +93,8 @@ fun RoleSelectionScreen(
 
         RoleCard(
             icon = Icons.Filled.DirectionsBus,
-            title = "Both",
-            description = "Travel and manage transport",
+            title = stringResource(R.string.role_both),
+            description = stringResource(R.string.role_both_desc),
             isSelected = selectedRole == UserRole.BOTH,
             onClick = { selectedRole = UserRole.BOTH }
         )
@@ -117,7 +118,7 @@ fun RoleSelectionScreen(
                 )
             } else {
                 Text(
-                    "Continue",
+                    stringResource(R.string.btn_continue),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

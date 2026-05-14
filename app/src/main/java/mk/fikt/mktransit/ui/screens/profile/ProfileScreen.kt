@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.UserRole
 import mk.fikt.mktransit.viewmodel.AuthState
 import mk.fikt.mktransit.viewmodel.AuthViewModel
@@ -42,20 +44,20 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
+            title = { Text(stringResource(R.string.logout)) },
+            text = { Text(stringResource(R.string.logout_confirm)) },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
                     hasLoggedOut = true
                     viewModel.logout(context)
                 }) {
-                    Text("Logout", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.logout), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -64,7 +66,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile") },
+                title = { Text(stringResource(R.string.profile)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -85,7 +87,6 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,9 +132,9 @@ fun ProfileScreen(
                             ) {
                                 Text(
                                     text = when (state.user.role) {
-                                        UserRole.PASSENGER -> "Passenger"
-                                        UserRole.OPERATOR -> "Operator"
-                                        UserRole.BOTH -> "Passenger & Operator"
+                                        UserRole.PASSENGER -> stringResource(R.string.passenger)
+                                        UserRole.OPERATOR -> stringResource(R.string.operator)
+                                        UserRole.BOTH -> stringResource(R.string.passenger_and_operator)
                                     },
                                     modifier = Modifier.padding(
                                         horizontal = 16.dp,
@@ -146,7 +147,7 @@ fun ProfileScreen(
                         }
                         else -> {
                             Text(
-                                text = "Guest",
+                                text = stringResource(R.string.guest),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
@@ -158,7 +159,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Settings Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -168,36 +168,36 @@ fun ProfileScreen(
                 Column {
                     ProfileMenuItem(
                         icon = Icons.Filled.Favorite,
-                        title = "Favorites",
-                        subtitle = "Your saved lines and stops",
+                        title = stringResource(R.string.favorites),
+                        subtitle = stringResource(R.string.favorites_subtitle),
                         onClick = {}
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
                         icon = Icons.Filled.Notifications,
-                        title = "Notifications",
-                        subtitle = "Manage notification preferences",
+                        title = stringResource(R.string.notifications),
+                        subtitle = stringResource(R.string.notifications_subtitle),
                         onClick = {}
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
                         icon = Icons.Filled.Business,
-                        title = "Operator Dashboard",
-                        subtitle = "Manage your bus lines",
+                        title = stringResource(R.string.operator_dashboard),
+                        subtitle = stringResource(R.string.operator_dashboard_subtitle),
                         onClick = onOperatorClick
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
                         icon = Icons.Filled.Language,
-                        title = "Language",
-                        subtitle = "Macedonian / English",
+                        title = stringResource(R.string.language),
+                        subtitle = stringResource(R.string.language_subtitle),
                         onClick = {}
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
                         icon = Icons.Filled.Info,
-                        title = "About",
-                        subtitle = "MK Transit v1.0",
+                        title = stringResource(R.string.about),
+                        subtitle = stringResource(R.string.about_subtitle),
                         onClick = {}
                     )
                 }
@@ -205,7 +205,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Logout Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -214,8 +213,8 @@ fun ProfileScreen(
             ) {
                 ProfileMenuItem(
                     icon = Icons.Filled.Logout,
-                    title = "Logout",
-                    subtitle = "Sign out of your account",
+                    title = stringResource(R.string.logout),
+                    subtitle = stringResource(R.string.logout_subtitle),
                     onClick = { showLogoutDialog = true },
                     isDestructive = true
                 )

@@ -28,6 +28,23 @@
     <string name="facebook_app_id">808241605442056</string>
     <string name="fb_login_protocol_scheme">fb808241605442056</string>
     <string name="facebook_client_token">6726dc0f39e4ceda6a6838b47fbd841b</string>
+    <string name="welcome_back">Welcome back!</string>
+    <string name="create_account">Create Account</string>
+    <string name="forgot_password_title">Forgot your password?</string>
+    <string name="forgot_password_subtitle">Enter your email and we\'ll send you a reset link.</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="role_selection_title">How will you use MK Transit?</string>
+    <string name="role_selection_subtitle">You can change this later in settings</string>
+    <string name="role_passenger_desc">Browse lines, buy tickets, track buses</string>
+    <string name="role_operator_desc">Manage lines, stops, and timetables</string>
+    <string name="role_both_desc">Travel and manage transport</string>
+    <string name="btn_continue">Continue</string>
+    <string name="line_detail_title">Line Detail</string>
+    <string name="no_stops">No stops added yet</string>
+    <string name="purchased_at">Purchased</string>
+    <string name="show_qr_to_driver">Show this QR code to the driver</string>
+    <string name="ticket_not_found">Ticket not found</string>
 
     <!-- Errors -->
     <string name="error_empty_email">Please enter your email</string>
@@ -46,4 +63,112 @@
     <string name="nav_tickets">Tickets</string>
     <string name="nav_messages">Messages</string>
     <string name="nav_profile">Profile</string>
+
+    <!-- Home -->
+    <string name="search_hint">Search lines, stops…</string>
+    <string name="bus_lines">Bus Lines</string>
+    <string name="no_lines_found">No lines found</string>
+    <string name="could_not_load">Could not load lines</string>
+    <string name="retry">Retry</string>
+
+    <!-- Line Detail -->
+    <string name="stops">Stops</string>
+    <string name="reviews">Reviews</string>
+    <string name="buy_ticket">Buy Ticket</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="rate_line">Rate this line</string>
+    <string name="submit_rating">Submit Rating</string>
+    <string name="your_comment">Your comment (optional)</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_reviews">No reviews yet</string>
+    <string name="active">Active</string>
+    <string name="inactive">Inactive</string>
+
+    <!-- Tickets -->
+    <string name="my_tickets">My Tickets</string>
+    <string name="buy_ticket_title">Buy Ticket</string>
+    <string name="ticket_single">Single Ride</string>
+    <string name="ticket_daily">Daily Pass</string>
+    <string name="ticket_weekly">Weekly Pass</string>
+    <string name="ticket_valid">Valid</string>
+    <string name="ticket_expired">Expired</string>
+    <string name="ticket_used">Used</string>
+    <string name="no_tickets">No tickets yet</string>
+    <string name="purchase">Purchase</string>
+    <string name="your_ticket">Your Ticket</string>
+    <string name="ticket_id">Ticket ID</string>
+    <string name="valid_until">Valid until</string>
+
+    <!-- Map -->
+    <string name="your_location">Your Location</string>
+    <string name="enable_location">Enable location for nearby stops</string>
+    <string name="location_permission_needed">Location permission needed</string>
+    <string name="enable">Enable</string>
+    <string name="skopje_macedonia">Skopje, Macedonia</string>
+
+    <!-- Profile -->
+    <string name="profile">Profile</string>
+    <string name="favorites">Favorites</string>
+    <string name="favorites_subtitle">Your saved lines and stops</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_subtitle">Manage notification preferences</string>
+    <string name="operator_dashboard">Operator Dashboard</string>
+    <string name="operator_dashboard_subtitle">Manage your bus lines</string>
+    <string name="language">Language</string>
+    <string name="language_subtitle">Macedonian / English</string>
+    <string name="about">About</string>
+    <string name="about_subtitle">MK Transit v1.0</string>
+    <string name="logout">Logout</string>
+    <string name="logout_subtitle">Sign out of your account</string>
+    <string name="logout_confirm">Are you sure you want to logout?</string>
+    <string name="passenger">Passenger</string>
+    <string name="operator">Operator</string>
+    <string name="passenger_and_operator">Passenger &amp; Operator</string>
+    <string name="guest">Guest</string>
+
+    <!-- Operator Dashboard -->
+    <string name="setup_profile">Set up your operator profile</string>
+    <string name="setup_profile_subtitle">Create your company profile to start managing bus lines</string>
+    <string name="create_profile">Create Profile</string>
+    <string name="company_profile">Company Profile</string>
+    <string name="company_name">Company Name</string>
+    <string name="description">Description</string>
+    <string name="contact_email">Contact Email</string>
+    <string name="phone">Phone</string>
+    <string name="coverage_area">Coverage Area</string>
+    <string name="save">Save</string>
+    <string name="total_lines">Total Lines</string>
+    <string name="active_lines">Active Lines</string>
+    <string name="your_lines">Your Lines</string>
+    <string name="no_lines_yet">No lines yet</string>
+    <string name="tap_to_add">Tap + to add your first line</string>
+    <string name="new_bus_line">New Bus Line</string>
+    <string name="line_number">Line Number</string>
+    <string name="line_name">Line Name</string>
+    <string name="line_type">Type</string>
+    <string name="start_stop">Start Stop</string>
+    <string name="end_stop">End Stop</string>
+    <string name="create">Create</string>
+    <string name="delete_line">Delete Line</string>
+    <string name="delete_line_confirm">Are you sure you want to delete this line?</string>
+    <string name="delete">Delete</string>
+
+    <!-- Driver Mode -->
+    <string name="driver_mode">Driver Mode</string>
+    <string name="driving">DRIVING</string>
+    <string name="offline">OFFLINE</string>
+    <string name="select_line">Select a line</string>
+    <string name="start_driving">Start Driving</string>
+    <string name="stop_driving">Stop Driving</string>
+    <string name="ticket_validation">Ticket Validation</string>
+    <string name="scan_qr">Scan QR Ticket</string>
+    <string name="gps_info">GPS location is shared every 5 seconds while driving</string>
+
+    <!-- Messages -->
+    <string name="messages">Messages</string>
+    <string name="no_messages">No conversations yet</string>
+    <string name="type_message">Type a message…</string>
+    <string name="send">Send</string>
+    <string name="new_conversation">New Conversation</string>
 </resources>

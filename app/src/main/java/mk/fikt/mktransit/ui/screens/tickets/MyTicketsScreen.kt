@@ -11,11 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.data.local.entity.TicketEntity
 import mk.fikt.mktransit.viewmodel.TicketState
 import mk.fikt.mktransit.viewmodel.TicketViewModel
@@ -36,7 +38,7 @@ fun MyTicketsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Tickets") },
+                title = { Text(stringResource(R.string.my_tickets)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -52,18 +54,15 @@ fun MyTicketsScreen(
     ) { padding ->
         when (val state = ticketState) {
             is TicketState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
 
             is TicketState.Success -> {
                 if (state.tickets.isEmpty()) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize().padding(padding),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -75,23 +74,16 @@ fun MyTicketsScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "No tickets yet",
+                                text = stringResource(R.string.no_tickets),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                            )
-                            Text(
-                                text = "Buy a ticket from any bus line",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                             )
                         }
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize().padding(padding),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -107,12 +99,10 @@ fun MyTicketsScreen(
 
             else -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Loading tickets...")
+                    CircularProgressIndicator()
                 }
             }
         }
@@ -120,10 +110,11 @@ fun MyTicketsScreen(
 }
 
 @Composable
-fun TicketCard(
-    ticket: TicketEntity,
-    onClick: () -> Unit
-) {
+fun TicketCard(ticket: TicketEntity, onClick: () -> Unit) {
+    val validText = stringResource(R.string.ticket_valid)
+    val usedText = stringResource(R.string.ticket_used)
+    val expiredText = stringResource(R.string.ticket_expired)
+
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -134,7 +125,6 @@ fun TicketCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Line Number Badge
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp),
@@ -153,11 +143,7 @@ fun TicketCard(
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = ticket.lineName,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
-                )
+                Text(text = ticket.lineName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = ticket.ticketType.replace("_", " "),
@@ -183,7 +169,12 @@ fun TicketCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = ticket.status,
+                        text = when (ticket.status) {
+                            "PAID" -> validText
+                            "USED" -> usedText
+                            "EXPIRED" -> expiredText
+                            else -> ticket.status
+                        },
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         fontSize = 11.sp,

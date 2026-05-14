@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.viewmodel.MapViewModel
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -57,14 +59,13 @@ fun MapScreen(
         }
     }
 
-    // Скопје координати (default)
     val defaultLat = 41.9981
     val defaultLon = 21.4254
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Map") },
+                title = { Text(stringResource(R.string.nav_map)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -83,7 +84,6 @@ fun MapScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // OSMDroid MapView
             AndroidView(
                 factory = { ctx ->
                     MapView(ctx).apply {
@@ -97,14 +97,10 @@ fun MapScreen(
                         )
                         controller.setCenter(startPoint)
 
-                        // Додај локација overlay
-                        val myLocationOverlay = MyLocationNewOverlay(
-                            GpsMyLocationProvider(ctx), this
-                        )
+                        val myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this)
                         myLocationOverlay.enableMyLocation()
                         overlays.add(myLocationOverlay)
 
-                        // Тест маркери — стопови во Скопје
                         val stops = listOf(
                             Triple("Центар", 41.9981, 21.4254),
                             Triple("Аеродром", 41.9700, 21.4800),
@@ -123,7 +119,6 @@ fun MapScreen(
                     }
                 },
                 update = { _ -> },
-
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -140,22 +135,19 @@ fun MapScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = if (userLocation != null) "Your Location" else "Skopje, Macedonia",
+                            text = if (userLocation != null) stringResource(R.string.your_location)
+                            else stringResource(R.string.skopje_macedonia),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp
                         )
                         Text(
                             text = if (userLocation != null)
                                 "%.4f, %.4f".format(userLocation!!.latitude, userLocation!!.longitude)
-                            else "Enable location for nearby stops",
+                            else stringResource(R.string.enable_location),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -163,7 +155,7 @@ fun MapScreen(
                 }
             }
 
-            // Permission button
+            // Permission card
             if (!locationPermission.status.isGranted) {
                 Card(
                     modifier = Modifier
@@ -179,23 +171,17 @@ fun MapScreen(
                         modifier = Modifier.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Filled.LocationOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                        Icon(Icons.Filled.LocationOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.width(8.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Location permission needed",
+                                text = stringResource(R.string.location_permission_needed),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 13.sp
                             )
                         }
-                        TextButton(
-                            onClick = { locationPermission.launchPermissionRequest() }
-                        ) {
-                            Text("Enable")
+                        TextButton(onClick = { locationPermission.launchPermissionRequest() }) {
+                            Text(stringResource(R.string.enable))
                         }
                     }
                 }

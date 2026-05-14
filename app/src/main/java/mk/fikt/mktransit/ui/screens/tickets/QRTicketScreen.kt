@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.viewmodel.TicketState
 import mk.fikt.mktransit.viewmodel.TicketViewModel
 import java.text.SimpleDateFormat
@@ -43,7 +45,7 @@ fun QRTicketScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Your Ticket") },
+                title = { Text(stringResource(R.string.your_ticket)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -77,12 +79,9 @@ fun QRTicketScreen(
                         elevation = CardDefaults.cardElevation(8.dp)
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp),
+                            modifier = Modifier.fillMaxWidth().padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Status badge
                             Surface(
                                 color = when (ticket.status) {
                                     "PAID" -> Color(0xFF4CAF50)
@@ -92,11 +91,14 @@ fun QRTicketScreen(
                                 shape = RoundedCornerShape(20.dp)
                             ) {
                                 Text(
-                                    text = ticket.status,
+                                    text = when (ticket.status) {
+                                        "PAID" -> stringResource(R.string.ticket_valid)
+                                        "USED" -> stringResource(R.string.ticket_used)
+                                        "EXPIRED" -> stringResource(R.string.ticket_expired)
+                                        else -> ticket.status
+                                    },
                                     color = Color.White,
-                                    modifier = Modifier.padding(
-                                        horizontal = 20.dp, vertical = 6.dp
-                                    ),
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp
                                 )
@@ -125,9 +127,7 @@ fun QRTicketScreen(
                             ) {
                                 Text(
                                     text = ticket.ticketType.replace("_", " "),
-                                    modifier = Modifier.padding(
-                                        horizontal = 12.dp, vertical = 4.dp
-                                    ),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -135,24 +135,15 @@ fun QRTicketScreen(
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
-
                             HorizontalDivider()
-
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            // QR Code
                             qrBitmap?.let { bitmap ->
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                                     Box(
                                         modifier = Modifier
                                             .size(200.dp)
-                                            .background(
-                                                Color.White,
-                                                RoundedCornerShape(12.dp)
-                                            )
+                                            .background(Color.White, RoundedCornerShape(12.dp))
                                             .padding(12.dp)
                                     ) {
                                         Image(
@@ -165,19 +156,16 @@ fun QRTicketScreen(
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
-
                             HorizontalDivider()
-
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Ticket details
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
                                     Text(
-                                        text = "Ticket ID",
+                                        text = stringResource(R.string.ticket_id),
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
@@ -189,7 +177,7 @@ fun QRTicketScreen(
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "Price",
+                                        text = "MKD",
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
@@ -210,19 +198,15 @@ fun QRTicketScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "Purchased",
+                                        text = stringResource(R.string.purchased_at),
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
-                                    Text(
-                                        text = formatDate(ticket.purchasedAt),
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Text(text = formatDate(ticket.purchasedAt), fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "Valid Until",
+                                        text = stringResource(R.string.valid_until),
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
@@ -251,7 +235,7 @@ fun QRTicketScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Show this QR code to the driver",
+                            text = stringResource(R.string.show_qr_to_driver),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -260,18 +244,14 @@ fun QRTicketScreen(
             }
 
             is TicketState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
 
             else -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Ticket not found")
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.ticket_not_found))
                 }
             }
         }
@@ -287,16 +267,11 @@ fun generateQRCode(content: String): Bitmap? {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
         for (x in 0 until width) {
             for (y in 0 until height) {
-                bitmap.setPixel(
-                    x, y,
-                    if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE
-                )
+                bitmap.setPixel(x, y, if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE)
             }
         }
         bitmap
-    } catch (e: Exception) {
-        null
-    }
+    } catch (e: Exception) { null }
 }
 
 fun formatDate(timestamp: Long): String {

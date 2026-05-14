@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -37,6 +38,7 @@ fun LoginScreen(
     onBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
 
     var email by remember { mutableStateOf("") }
@@ -45,7 +47,6 @@ fun LoginScreen(
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
 
-    // Реагирај на промени во authState
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> onLoginSuccess()
@@ -76,7 +77,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Welcome back!",
+                text = stringResource(R.string.welcome_back),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -84,7 +85,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Email поле
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -103,7 +103,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Password поле
             OutlinedTextField(
                 value = password,
                 onValueChange = {
@@ -131,7 +130,6 @@ fun LoginScreen(
                 singleLine = true
             )
 
-            // Forgot password
             TextButton(
                 onClick = onNavigateToForgotPassword,
                 modifier = Modifier.align(Alignment.End)
@@ -141,7 +139,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Error порака
             if (authState is AuthState.Error) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -158,16 +155,15 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Login копче
             Button(
                 onClick = {
                     var valid = true
                     if (email.isBlank()) {
-                        emailError = "Please enter your email"
+                        emailError = context.getString(R.string.error_empty_email)
                         valid = false
                     }
                     if (password.isBlank()) {
-                        passwordError = "Please enter your password"
+                        passwordError = context.getString(R.string.error_empty_password)
                         valid = false
                     }
                     if (valid) viewModel.loginWithEmail(email, password)
@@ -194,7 +190,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Оди на Register
             TextButton(onClick = onNavigateToRegister) {
                 Text(stringResource(R.string.no_account))
             }

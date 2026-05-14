@@ -1,0 +1,174 @@
+<resources>
+    <string name="app_name">МК Транзит</string>
+
+    <!-- Auth -->
+    <string name="welcome_title">МК Транзит</string>
+    <string name="welcome_subtitle">Паметен јавен превоз за Македонија</string>
+    <string name="btn_login_email">Продолжи со Емаил</string>
+    <string name="btn_login_google">Продолжи со Google</string>
+    <string name="btn_login_facebook">Продолжи со Facebook</string>
+    <string name="btn_login_anonymous">Прегледај како гостин</string>
+    <string name="btn_login">Најава</string>
+    <string name="btn_register">Регистрација</string>
+    <string name="btn_logout">Одјава</string>
+    <string name="label_email">Емаил</string>
+    <string name="label_password">Лозинка</string>
+    <string name="label_name">Целосно име</string>
+    <string name="label_confirm_password">Потврди лозинка</string>
+    <string name="no_account">Немаш профил? Регистрирај се</string>
+    <string name="have_account">Веќе имаш профил? Најави се</string>
+    <string name="forgot_password">Заборавена лозинка?</string>
+    <string name="reset_password">Ресетирај лозинка</string>
+    <string name="reset_password_sent">Испратена е порака за ресетирање!</string>
+    <string name="select_role">Јас сакам да…</string>
+    <string name="role_passenger">Патувам како патник</string>
+    <string name="role_operator">Управувам како оператор</string>
+    <string name="role_both">И двете</string>
+    <string name="default_web_client_id">262264957123-3b0jio1olkb2678770n66rhqcflb2f1h.apps.googleusercontent.com</string>
+    <string name="facebook_app_id">808241605442056</string>
+    <string name="fb_login_protocol_scheme">fb808241605442056</string>
+    <string name="facebook_client_token">6726dc0f39e4ceda6a6838b47fbd841b</string>
+    <string name="welcome_back">Добредојде!</string>
+    <string name="create_account">Создај профил</string>
+    <string name="forgot_password_title">Заборавена лозинка?</string>
+    <string name="forgot_password_subtitle">Внеси го твојот емаил и ќе ти испратиме линк.</string>
+    <string name="send_reset_link">Испрати линк</string>
+    <string name="back_to_login">Назад кон најава</string>
+    <string name="role_selection_title">Како ќе го користиш МК Транзит?</string>
+    <string name="role_selection_subtitle">Можеш да го промениш ова подоцна</string>
+    <string name="role_passenger_desc">Прегледај линии, купи билети, следи автобуси</string>
+    <string name="role_operator_desc">Управувај со линии, стопови и возни редови</string>
+    <string name="role_both_desc">Патувај и управувај со превоз</string>
+    <string name="btn_continue">Продолжи</string>
+    <string name="line_detail_title">Детали за линија</string>
+    <string name="no_stops">Сè уште нема стопови</string>
+    <string name="purchased_at">Купено</string>
+    <string name="show_qr_to_driver">Покажи го QR кодот на возачот</string>
+    <string name="ticket_not_found">Билетот не е пронајден</string>
+
+    <!-- Errors -->
+    <string name="error_empty_email">Внесете го вашиот емаил</string>
+    <string name="error_invalid_email">Невалидна емаил адреса</string>
+    <string name="error_empty_password">Внесете лозинка</string>
+    <string name="error_short_password">Лозинката мора да има најмалку 6 знаци</string>
+    <string name="error_password_mismatch">Лозинките не се совпаѓаат</string>
+    <string name="error_empty_name">Внесете го вашето име</string>
+    <string name="error_login_failed">Најавата не успеа. Обидете се повторно.</string>
+    <string name="error_register_failed">Регистрацијата не успеа. Обидете се повторно.</string>
+    <string name="error_network">Нема интернет конекција</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Дома</string>
+    <string name="nav_map">Мапа</string>
+    <string name="nav_tickets">Билети</string>
+    <string name="nav_messages">Пораки</string>
+    <string name="nav_profile">Профил</string>
+
+    <!-- Home -->
+    <string name="search_hint">Пребарај линии, стопови…</string>
+    <string name="bus_lines">Автобуски линии</string>
+    <string name="no_lines_found">Не се пронајдени линии</string>
+    <string name="could_not_load">Не можат да се вчитаат линиите</string>
+    <string name="retry">Обиди се повторно</string>
+
+    <!-- Line Detail -->
+    <string name="stops">Стопови</string>
+    <string name="reviews">Оценки</string>
+    <string name="buy_ticket">Купи билет</string>
+    <string name="add_to_favorites">Додај во омилени</string>
+    <string name="remove_from_favorites">Отстрани од омилени</string>
+    <string name="rate_line">Оцени ја оваа линија</string>
+    <string name="submit_rating">Испрати оценка</string>
+    <string name="your_comment">Твој коментар (незадолжително)</string>
+    <string name="cancel">Откажи</string>
+    <string name="no_reviews">Сè уште нема оценки</string>
+    <string name="active">Активна</string>
+    <string name="inactive">Неактивна</string>
+
+    <!-- Tickets -->
+    <string name="my_tickets">Мои билети</string>
+    <string name="buy_ticket_title">Купи билет</string>
+    <string name="ticket_single">Еднократна вожња</string>
+    <string name="ticket_daily">Дневна карта</string>
+    <string name="ticket_weekly">Неделна карта</string>
+    <string name="ticket_valid">Важечки</string>
+    <string name="ticket_expired">Истечен</string>
+    <string name="ticket_used">Искористен</string>
+    <string name="no_tickets">Сè уште нема билети</string>
+    <string name="purchase">Купи</string>
+    <string name="your_ticket">Твојот билет</string>
+    <string name="ticket_id">Број на билет</string>
+    <string name="valid_until">Важи до</string>
+
+    <!-- Map -->
+    <string name="your_location">Твојата локација</string>
+    <string name="enable_location">Овозможи локација за блиски стопови</string>
+    <string name="location_permission_needed">Потребна е дозвола за локација</string>
+    <string name="enable">Овозможи</string>
+    <string name="skopje_macedonia">Скопје, Македонија</string>
+
+    <!-- Profile -->
+    <string name="profile">Профил</string>
+    <string name="favorites">Омилени</string>
+    <string name="favorites_subtitle">Зачувани линии и стопови</string>
+    <string name="notifications">Известувања</string>
+    <string name="notifications_subtitle">Управувај со известувањата</string>
+    <string name="operator_dashboard">Операторска табла</string>
+    <string name="operator_dashboard_subtitle">Управувај со автобуски линии</string>
+    <string name="language">Јазик</string>
+    <string name="language_subtitle">Македонски / Англиски</string>
+    <string name="about">За апликацијата</string>
+    <string name="about_subtitle">МК Транзит v1.0</string>
+    <string name="logout">Одјава</string>
+    <string name="logout_subtitle">Одјави се од профилот</string>
+    <string name="logout_confirm">Дали сигурно сакаш да се одјавиш?</string>
+    <string name="passenger">Патник</string>
+    <string name="operator">Оператор</string>
+    <string name="passenger_and_operator">Патник и Оператор</string>
+    <string name="guest">Гостин</string>
+
+    <!-- Operator Dashboard -->
+    <string name="setup_profile">Постави операторски профил</string>
+    <string name="setup_profile_subtitle">Создај профил за да управуваш со линии</string>
+    <string name="create_profile">Создај профил</string>
+    <string name="company_profile">Профил на компанија</string>
+    <string name="company_name">Ime на компанија</string>
+    <string name="description">Опис</string>
+    <string name="contact_email">Контакт емаил</string>
+    <string name="phone">Телефон</string>
+    <string name="coverage_area">Подрачје на покриеност</string>
+    <string name="save">Зачувај</string>
+    <string name="total_lines">Вкупно линии</string>
+    <string name="active_lines">Активни линии</string>
+    <string name="your_lines">Твои линии</string>
+    <string name="no_lines_yet">Сè уште нема линии</string>
+    <string name="tap_to_add">Притисни + за да додадеш линија</string>
+    <string name="new_bus_line">Нова автобуска линија</string>
+    <string name="line_number">Број на линија</string>
+    <string name="line_name">Ime на линија</string>
+    <string name="line_type">Тип</string>
+    <string name="start_stop">Почетна постојка</string>
+    <string name="end_stop">Крајна постојка</string>
+    <string name="create">Создај</string>
+    <string name="delete_line">Избриши линија</string>
+    <string name="delete_line_confirm">Дали сигурно сакаш да ја избришеш оваа линија?</string>
+    <string name="delete">Избриши</string>
+
+    <!-- Driver Mode -->
+    <string name="driver_mode">Режим на возач</string>
+    <string name="driving">ВО ВОЖЊА</string>
+    <string name="offline">ОФЛАЈН</string>
+    <string name="select_line">Избери линија</string>
+    <string name="start_driving">Започни вожња</string>
+    <string name="stop_driving">Запри вожња</string>
+    <string name="ticket_validation">Валидација на билети</string>
+    <string name="scan_qr">Скенирај QR билет</string>
+    <string name="gps_info">GPS локацијата се споделува на секои 5 секунди</string>
+
+    <!-- Messages -->
+    <string name="messages">Пораки</string>
+    <string name="no_messages">Сè уште нема разговори</string>
+    <string name="type_message">Напиши порака…</string>
+    <string name="send">Испрати</string>
+    <string name="new_conversation">Нов разговор</string>
+</resources>

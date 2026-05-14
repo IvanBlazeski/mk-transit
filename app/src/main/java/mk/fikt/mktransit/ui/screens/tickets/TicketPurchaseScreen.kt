@@ -8,11 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.viewmodel.TicketState
 import mk.fikt.mktransit.viewmodel.TicketViewModel
 
@@ -36,15 +38,15 @@ fun TicketPurchaseScreen(
     }
 
     val ticketTypes = listOf(
-        Triple("SINGLE", "Single Ride", 35f),
-        Triple("DAILY", "Daily Pass", 120f),
-        Triple("WEEKLY", "Weekly Pass", 600f)
+        Triple("SINGLE", stringResource(R.string.ticket_single), 35f),
+        Triple("DAILY", stringResource(R.string.ticket_daily), 120f),
+        Triple("WEEKLY", stringResource(R.string.ticket_weekly), 600f)
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Buy Ticket") },
+                title = { Text(stringResource(R.string.buy_ticket_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -65,11 +67,7 @@ fun TicketPurchaseScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Line Info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -90,13 +88,9 @@ fun TicketPurchaseScreen(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
+                        Text(text = lineName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Text(
-                            text = lineName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = "Select ticket type",
+                            text = stringResource(R.string.buy_ticket_title),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -107,7 +101,7 @@ fun TicketPurchaseScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Choose Ticket Type",
+                text = stringResource(R.string.buy_ticket_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 modifier = Modifier.align(Alignment.Start)
@@ -115,7 +109,6 @@ fun TicketPurchaseScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ticket Type Cards
             ticketTypes.forEach { (type, label, price) ->
                 TicketTypeCard(
                     type = type,
@@ -129,12 +122,9 @@ fun TicketPurchaseScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Error
             if (ticketState is TicketState.Error) {
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -146,25 +136,18 @@ fun TicketPurchaseScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Price summary
             val selectedPrice = ticketTypes.find { it.first == selectedType }?.third ?: 35f
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Total",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    Text(text = "Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Text(
                         text = "${selectedPrice.toInt()} MKD",
                         fontWeight = FontWeight.Bold,
@@ -176,7 +159,6 @@ fun TicketPurchaseScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Buy копче
             Button(
                 onClick = {
                     viewModel.purchaseTicket(
@@ -187,25 +169,16 @@ fun TicketPurchaseScreen(
                         price = selectedPrice
                     )
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 enabled = ticketState !is TicketState.Loading
             ) {
                 if (ticketState is TicketState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Icon(Icons.Filled.ConfirmationNumber, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Confirm Purchase",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text(stringResource(R.string.purchase), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -220,13 +193,6 @@ fun TicketTypeCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val description = when (type) {
-        "SINGLE" -> "Valid for 2 hours"
-        "DAILY" -> "Valid for 24 hours"
-        "WEEKLY" -> "Valid for 7 days"
-        else -> ""
-    }
-
     OutlinedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -242,30 +208,20 @@ fun TicketTypeCard(
             else MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = description,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
                 text = "${price.toInt()} MKD",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
     }

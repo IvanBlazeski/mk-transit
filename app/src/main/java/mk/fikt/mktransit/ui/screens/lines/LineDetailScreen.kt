@@ -10,11 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.Rating
 import mk.fikt.mktransit.domain.model.Stop
 import mk.fikt.mktransit.viewmodel.LineDetailState
@@ -39,21 +41,17 @@ fun LineDetailScreen(
         viewModel.loadLineDetail(lineId)
     }
 
-    // Rating дијалог
     if (showRatingDialog) {
         AlertDialog(
             onDismissRequest = { showRatingDialog = false },
-            title = { Text("Rate this line") },
+            title = { Text(stringResource(R.string.rate_line)) },
             text = {
                 Column {
-                    // Stars
-                    Row(horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                         (1..5).forEach { star ->
                             IconButton(onClick = { selectedStars = star }) {
                                 Icon(
-                                    if (star <= selectedStars) Icons.Filled.Star
-                                    else Icons.Filled.StarBorder,
+                                    if (star <= selectedStars) Icons.Filled.Star else Icons.Filled.StarBorder,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.secondary,
                                     modifier = Modifier.size(36.dp)
@@ -65,7 +63,7 @@ fun LineDetailScreen(
                     OutlinedTextField(
                         value = comment,
                         onValueChange = { comment = it },
-                        label = { Text("Comment (optional)") },
+                        label = { Text(stringResource(R.string.your_comment)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -79,11 +77,11 @@ fun LineDetailScreen(
                             showRatingDialog = false
                         }
                     }
-                ) { Text("Submit") }
+                ) { Text(stringResource(R.string.submit_rating)) }
             },
             dismissButton = {
                 TextButton(onClick = { showRatingDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -94,9 +92,8 @@ fun LineDetailScreen(
             TopAppBar(
                 title = {
                     when (val s = state) {
-                        is LineDetailState.Success ->
-                            Text("Line ${s.line.lineNumber}")
-                        else -> Text("Line Detail")
+                        is LineDetailState.Success -> Text("Line ${s.line.lineNumber}")
+                        else -> Text(stringResource(R.string.line_detail_title))
                     }
                 },
                 navigationIcon = {
@@ -112,9 +109,8 @@ fun LineDetailScreen(
                         }
                     }) {
                         Icon(
-                            if (isFavorite) Icons.Filled.Favorite
-                            else Icons.Filled.FavoriteBorder,
-                            contentDescription = "Favorite",
+                            if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = stringResource(R.string.favorites),
                             tint = if (isFavorite) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.onPrimary
                         )
@@ -130,35 +126,23 @@ fun LineDetailScreen(
     ) { padding ->
         when (val s = state) {
             is LineDetailState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-
             is LineDetailState.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(s.message, color = MaterialTheme.colorScheme.error)
                 }
             }
-
             is LineDetailState.Success -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Line Info Card
                     item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
+                        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Surface(
@@ -177,71 +161,46 @@ fun LineDetailScreen(
                                     }
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column {
-                                        Text(
-                                            text = s.line.lineName,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 18.sp
-                                        )
-                                        Text(
-                                            text = s.line.lineType.name,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 13.sp
-                                        )
+                                        Text(text = s.line.lineName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                        Text(text = s.line.lineType.name, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp)
                                     }
                                 }
-
                                 Spacer(modifier = Modifier.height(12.dp))
                                 HorizontalDivider()
                                 Spacer(modifier = Modifier.height(12.dp))
-
-                                // Rating
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        Icons.Filled.Star,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Icon(Icons.Filled.Star, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = if (s.line.ratingCount > 0)
-                                            "%.1f (${s.line.ratingCount} reviews)"
-                                                .format(s.line.averageRating)
-                                        else "No ratings yet",
+                                            "%.1f (${s.line.ratingCount})".format(s.line.averageRating)
+                                        else stringResource(R.string.no_reviews),
                                         fontSize = 14.sp
                                     )
                                     Spacer(modifier = Modifier.weight(1f))
                                     TextButton(onClick = { showRatingDialog = true }) {
-                                        Text("Rate")
+                                        Text(stringResource(R.string.rate_line))
                                     }
                                 }
                             }
                         }
                     }
 
-                    // Buy Ticket копче
                     item {
                         Button(
                             onClick = { onBuyTicket(lineId) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp),
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(Icons.Filled.ConfirmationNumber, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Buy Ticket",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Text(stringResource(R.string.buy_ticket), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
-                    // Stops
                     item {
                         Text(
-                            text = "Stops (${s.stops.size})",
+                            text = "${stringResource(R.string.stops)} (${s.stops.size})",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -249,12 +208,9 @@ fun LineDetailScreen(
 
                     if (s.stops.isEmpty()) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                                 Text(
-                                    text = "No stops added yet",
+                                    text = stringResource(R.string.no_stops),
                                     modifier = Modifier.padding(16.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -262,18 +218,13 @@ fun LineDetailScreen(
                         }
                     } else {
                         itemsIndexed(s.stops) { index, stop ->
-                            StopItem(
-                                stop = stop,
-                                isFirst = index == 0,
-                                isLast = index == s.stops.lastIndex
-                            )
+                            StopItem(stop = stop, isFirst = index == 0, isLast = index == s.stops.lastIndex)
                         }
                     }
 
-                    // Reviews
                     item {
                         Text(
-                            text = "Reviews (${s.ratings.size})",
+                            text = "${stringResource(R.string.reviews)} (${s.ratings.size})",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -281,12 +232,9 @@ fun LineDetailScreen(
 
                     if (s.ratings.isEmpty()) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
+                            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                                 Text(
-                                    text = "No reviews yet. Be the first!",
+                                    text = stringResource(R.string.no_reviews),
                                     modifier = Modifier.padding(16.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -305,23 +253,10 @@ fun LineDetailScreen(
 
 @Composable
 fun StopItem(stop: Stop, isFirst: Boolean, isLast: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(32.dp)
-        ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(32.dp)) {
             if (!isFirst) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(12.dp)
-                        .padding(0.dp)
-                ) {
-                    HorizontalDivider()
-                }
+                Box(modifier = Modifier.width(2.dp).height(12.dp)) { HorizontalDivider() }
             }
             Surface(
                 shape = RoundedCornerShape(50),
@@ -333,68 +268,26 @@ fun StopItem(stop: Stop, isFirst: Boolean, isLast: Boolean) {
                 modifier = Modifier.size(12.dp)
             ) {}
             if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(12.dp)
-                ) {
-                    HorizontalDivider()
-                }
+                Box(modifier = Modifier.width(2.dp).height(12.dp)) { HorizontalDivider() }
             }
         }
-
         Spacer(modifier = Modifier.width(12.dp))
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), shape = RoundedCornerShape(12.dp)) {
+            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stop.stopName,
-                        fontWeight = if (isFirst || isLast) FontWeight.Bold
-                        else FontWeight.Normal
-                    )
+                    Text(text = stop.stopName, fontWeight = if (isFirst || isLast) FontWeight.Bold else FontWeight.Normal)
                     if (stop.minutesFromStart > 0) {
-                        Text(
-                            text = "+${stop.minutesFromStart} min",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                        Text(text = "+${stop.minutesFromStart} min", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                 }
                 if (isFirst) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            "START",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(8.dp)) {
+                        Text("START", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 if (isLast) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            "END",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(8.dp)) {
+                        Text("END", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -404,16 +297,12 @@ fun StopItem(stop: Stop, isFirst: Boolean, isLast: Boolean) {
 
 @Composable
 fun RatingItem(rating: Rating) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { index ->
                     Icon(
-                        if (index < rating.stars) Icons.Filled.Star
-                        else Icons.Filled.StarBorder,
+                        if (index < rating.stars) Icons.Filled.Star else Icons.Filled.StarBorder,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(16.dp)
@@ -422,11 +311,7 @@ fun RatingItem(rating: Rating) {
             }
             if (rating.comment.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = rating.comment,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
+                Text(text = rating.comment, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             }
         }
     }

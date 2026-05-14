@@ -11,12 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.FirebaseAuth
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.Message
 import mk.fikt.mktransit.viewmodel.MessageState
 import mk.fikt.mktransit.viewmodel.MessageViewModel
@@ -49,7 +51,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Conversation") },
+                title = { Text(stringResource(R.string.messages)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -63,10 +65,7 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            // Input bar
-            Surface(
-                tonalElevation = 8.dp
-            ) {
+            Surface(tonalElevation = 8.dp) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -76,22 +75,20 @@ fun ChatScreen(
                     OutlinedTextField(
                         value = newMessage,
                         onValueChange = { viewModel.updateNewMessage(it) },
-                        placeholder = { Text("Type a message...") },
+                        placeholder = { Text(stringResource(R.string.type_message)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
                         maxLines = 3
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     FloatingActionButton(
-                        onClick = {
-                            viewModel.sendMessage(conversationId, operatorId)
-                        },
+                        onClick = { viewModel.sendMessage(conversationId, operatorId) },
                         modifier = Modifier.size(48.dp),
                         containerColor = MaterialTheme.colorScheme.primary
                     ) {
                         Icon(
                             Icons.Filled.Send,
-                            contentDescription = "Send",
+                            contentDescription = stringResource(R.string.send),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -101,31 +98,26 @@ fun ChatScreen(
     ) { padding ->
         when (val s = state) {
             is MessageState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator() }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
 
             is MessageState.MessagesLoaded -> {
                 if (s.messages.isEmpty()) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize().padding(padding),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Start the conversation!",
+                            text = stringResource(R.string.no_messages),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
                 } else {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize().padding(padding),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -140,20 +132,16 @@ fun ChatScreen(
             }
 
             else -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) { Text("No messages") }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.no_messages))
+                }
             }
         }
     }
 }
 
 @Composable
-fun MessageBubble(
-    message: Message,
-    isOwn: Boolean
-) {
+fun MessageBubble(message: Message, isOwn: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isOwn) Arrangement.End else Arrangement.Start

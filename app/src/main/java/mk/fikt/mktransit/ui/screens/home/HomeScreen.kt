@@ -14,11 +14,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.BusLine
 import mk.fikt.mktransit.domain.model.LineType
 import mk.fikt.mktransit.viewmodel.LineState
@@ -43,13 +45,13 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "MK Transit",
+                        text = stringResource(R.string.app_name),
                         fontWeight = FontWeight.Bold
                     )
                 },
                 actions = {
                     IconButton(onClick = onProfileClick) {
-                        Icon(Icons.Filled.Person, contentDescription = "Profile")
+                        Icon(Icons.Filled.Person, contentDescription = stringResource(R.string.nav_profile))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -65,25 +67,25 @@ fun HomeScreen(
                     selected = true,
                     onClick = {},
                     icon = { Icon(Icons.Filled.Home, contentDescription = null) },
-                    label = { Text("Home") }
+                    label = { Text(stringResource(R.string.nav_home)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onMapClick,
                     icon = { Icon(Icons.Filled.Map, contentDescription = null) },
-                    label = { Text("Map") }
+                    label = { Text(stringResource(R.string.nav_map)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onTicketsClick,
                     icon = { Icon(Icons.Filled.ConfirmationNumber, contentDescription = null) },
-                    label = { Text("Tickets") }
+                    label = { Text(stringResource(R.string.nav_tickets)) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onMessagesClick,
                     icon = { Icon(Icons.Filled.Message, contentDescription = null) },
-                    label = { Text("Messages") }
+                    label = { Text(stringResource(R.string.nav_messages)) }
                 )
             }
         }
@@ -96,7 +98,7 @@ fun HomeScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { lineViewModel.updateSearch(it) },
-                placeholder = { Text("Search lines, stops...") },
+                placeholder = { Text(stringResource(R.string.search_hint)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -127,12 +129,12 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Could not load lines",
+                                text = stringResource(R.string.could_not_load),
                                 color = MaterialTheme.colorScheme.error
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(onClick = { lineViewModel.loadLines() }) {
-                                Text("Retry")
+                                Text(stringResource(R.string.retry))
                             }
                         }
                     }
@@ -155,7 +157,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "No lines found",
+                                    text = stringResource(R.string.no_lines_found),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
@@ -171,7 +173,7 @@ fun HomeScreen(
                             ) {
                                 item(span = { GridItemSpan(2) }) {
                                     Text(
-                                        text = "Bus Lines",
+                                        text = stringResource(R.string.bus_lines),
                                         fontSize = 20.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(vertical = 8.dp)
@@ -191,7 +193,7 @@ fun HomeScreen(
                             ) {
                                 item {
                                     Text(
-                                        text = "Bus Lines",
+                                        text = stringResource(R.string.bus_lines),
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(vertical = 8.dp)

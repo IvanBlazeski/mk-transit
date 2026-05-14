@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.tasks.await
+import mk.fikt.mktransit.R
 import mk.fikt.mktransit.viewmodel.OperatorViewModel
 
 @SuppressLint("MissingPermission")
@@ -42,22 +44,23 @@ fun DriverModeScreen(
 
     var isActive by remember { mutableStateOf(false) }
     var selectedLineId by remember { mutableStateOf("") }
-    var selectedLineName by remember { mutableStateOf("Select a line") }
+    var selectedLineName by remember { mutableStateOf("") }
     var currentLat by remember { mutableStateOf(0.0) }
     var currentLon by remember { mutableStateOf(0.0) }
     var expanded by remember { mutableStateOf(false) }
 
+    val selectLineText = stringResource(R.string.select_line)
+
     LaunchedEffect(Unit) {
+        selectedLineName = selectLineText
         viewModel.loadOperatorProfile()
     }
 
-    // GPS споделување секои 5 секунди
     LaunchedEffect(isActive, selectedLineId) {
         if (isActive && selectedLineId.isNotBlank()) {
             while (this.isActive) {
                 try {
-                    val fusedClient = LocationServices
-                        .getFusedLocationProviderClient(context)
+                    val fusedClient = LocationServices.getFusedLocationProviderClient(context)
                     val location = fusedClient.getCurrentLocation(
                         Priority.PRIORITY_HIGH_ACCURACY, null
                     ).await()
@@ -65,26 +68,21 @@ fun DriverModeScreen(
                     location?.let { loc ->
                         currentLat = loc.latitude
                         currentLon = loc.longitude
-
                         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                         FirebaseFirestore.getInstance()
                             .collection("vehicleLocations")
                             .document(selectedLineId)
-                            .set(
-                                hashMapOf(
-                                    "lineId" to selectedLineId,
-                                    "driverUid" to uid,
-                                    "latitude" to loc.latitude,
-                                    "longitude" to loc.longitude,
-                                    "bearing" to (location.bearing),
-                                    "updatedAt" to System.currentTimeMillis(),
-                                    "isActive" to true
-                                )
-                            )
+                            .set(hashMapOf(
+                                "lineId" to selectedLineId,
+                                "driverUid" to uid,
+                                "latitude" to loc.latitude,
+                                "longitude" to loc.longitude,
+                                "bearing" to (location.bearing),
+                                "updatedAt" to System.currentTimeMillis(),
+                                "isActive" to true
+                            ))
                     }
-                } catch (e: Exception) {
-                    // ignore
-                }
+                } catch (e: Exception) { }
                 delay(5000)
             }
         }
@@ -93,7 +91,7 @@ fun DriverModeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Driver Mode") },
+                title = { Text(stringResource(R.string.driver_mode)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -115,7 +113,6 @@ fun DriverModeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             // Status Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,28 +136,21 @@ fun DriverModeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            if (isActive) Icons.Filled.DirectionsBus else Icons.Filled.DirectionsBus,
+                            Icons.Filled.DirectionsBus,
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
                             tint = if (isActive) Color.White else MaterialTheme.colorScheme.primary
                         )
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
                     Text(
-                        text = if (isActive) "DRIVING" else "OFFLINE",
+                        text = if (isActive) stringResource(R.string.driving) else stringResource(R.string.offline),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                     if (isActive) {
-                        Text(
-                            text = selectedLineName,
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                        Text(text = selectedLineName, fontSize = 14.sp, color = Color.White.copy(alpha = 0.9f))
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "GPS: %.4f, %.4f".format(currentLat, currentLon),
@@ -181,19 +171,12 @@ fun DriverModeScreen(
                         value = selectedLineName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Select Line") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
+                        label = { Text(stringResource(R.string.select_line)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
                         shape = RoundedCornerShape(12.dp)
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
+                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         lines.forEach { line ->
                             DropdownMenuItem(
                                 text = { Text("${line.lineNumber} - ${line.lineName}") },
@@ -214,7 +197,6 @@ fun DriverModeScreen(
                     if (selectedLineId.isNotBlank()) {
                         isActive = !isActive
                         if (!isActive) {
-                            // Деактивирај
                             FirebaseFirestore.getInstance()
                                 .collection("vehicleLocations")
                                 .document(selectedLineId)
@@ -222,23 +204,17 @@ fun DriverModeScreen(
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isActive) MaterialTheme.colorScheme.error
-                    else Color(0xFF4CAF50)
+                    containerColor = if (isActive) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
                 ),
                 enabled = selectedLineId.isNotBlank() || isActive
             ) {
-                Icon(
-                    if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                    contentDescription = null
-                )
+                Icon(if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    if (isActive) "Stop Driving" else "Start Driving",
+                    if (isActive) stringResource(R.string.stop_driving) else stringResource(R.string.start_driving),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -246,9 +222,8 @@ fun DriverModeScreen(
 
             HorizontalDivider()
 
-            // QR Scanner Button
             Text(
-                text = "Ticket Validation",
+                text = stringResource(R.string.ticket_validation),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 modifier = Modifier.align(Alignment.Start)
@@ -256,21 +231,14 @@ fun DriverModeScreen(
 
             OutlinedButton(
                 onClick = onScanQR,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Filled.QrCodeScanner, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Scan QR Ticket",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text(stringResource(R.string.scan_qr), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
 
-            // Info
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -278,19 +246,11 @@ fun DriverModeScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 )
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "GPS location is shared every 5 seconds while driving",
+                        text = stringResource(R.string.gps_info),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         textAlign = TextAlign.Start

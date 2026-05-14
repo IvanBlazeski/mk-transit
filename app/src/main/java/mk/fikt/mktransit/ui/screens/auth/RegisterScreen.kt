@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,6 +33,7 @@ fun RegisterScreen(
     onBack: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
 
     var name by remember { mutableStateOf("") }
@@ -74,7 +76,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Create Account",
+                text = stringResource(R.string.create_account),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -82,7 +84,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Name
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it; nameError = "" },
@@ -97,7 +98,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; emailError = "" },
@@ -113,7 +113,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Password
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it; passwordError = "" },
@@ -140,7 +139,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Confirm Password
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it; confirmError = "" },
@@ -157,12 +155,9 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Error
             if (authState is AuthState.Error) {
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -174,33 +169,23 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Register копче
             Button(
                 onClick = {
                     var valid = true
-                    if (name.isBlank()) { nameError = "Please enter your name"; valid = false }
-                    if (email.isBlank()) { emailError = "Please enter your email"; valid = false }
-                    if (password.length < 6) { passwordError = "Min 6 characters"; valid = false }
-                    if (password != confirmPassword) { confirmError = "Passwords don't match"; valid = false }
+                    if (name.isBlank()) { nameError = context.getString(R.string.error_empty_name); valid = false }
+                    if (email.isBlank()) { emailError = context.getString(R.string.error_empty_email); valid = false }
+                    if (password.length < 6) { passwordError = context.getString(R.string.error_short_password); valid = false }
+                    if (password != confirmPassword) { confirmError = context.getString(R.string.error_password_mismatch); valid = false }
                     if (valid) viewModel.registerWithEmail(email, password, name)
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 enabled = authState !is AuthState.Loading
             ) {
                 if (authState is AuthState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text(
-                        stringResource(R.string.btn_register),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text(stringResource(R.string.btn_register), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
