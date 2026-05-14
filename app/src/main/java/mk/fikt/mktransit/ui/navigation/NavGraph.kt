@@ -25,6 +25,8 @@ import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
 import mk.fikt.mktransit.ui.screens.profile.FavoritesScreen
+import mk.fikt.mktransit.ui.screens.tickets.QRScannerScreen
+
 
 @Composable
 fun NavGraph(
@@ -144,7 +146,9 @@ fun NavGraph(
         }
 
         composable(NavRoutes.QR_SCANNER) {
-            Text("QR Scanner — Coming Soon!")
+            QRScannerScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(
