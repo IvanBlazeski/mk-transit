@@ -145,7 +145,10 @@ fun NavGraph(
             LineDetailScreen(
                 lineId = lineId,
                 onBack = { navController.popBackStack() },
-                onBuyTicket = { navController.navigate(NavRoutes.ticketPurchase(it)) }
+                onBuyTicket = { navController.navigate(NavRoutes.ticketPurchase(it)) },
+                onContactOperator = { operatorId ->
+                    navController.navigate(NavRoutes.chat(operatorId))
+                }
             )
         }
 

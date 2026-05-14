@@ -37,8 +37,11 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
+
     LaunchedEffect(conversationId) {
-        viewModel.loadMessages(conversationId)
+        // Провери дали conversationId е operatorId (нов разговор)
+        // или постоечки conversationId
+        viewModel.loadOrCreateConversation(conversationId, operatorId)
     }
 
     LaunchedEffect(state) {

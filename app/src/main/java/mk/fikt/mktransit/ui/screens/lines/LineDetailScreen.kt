@@ -28,6 +28,7 @@ fun LineDetailScreen(
     lineId: String,
     onBack: () -> Unit,
     onBuyTicket: (String) -> Unit,
+    onContactOperator: (String) -> Unit = {},
     viewModel: LineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -141,6 +142,7 @@ fun LineDetailScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Line Info Card
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -186,6 +188,7 @@ fun LineDetailScreen(
                         }
                     }
 
+                    // Buy Ticket копче
                     item {
                         Button(
                             onClick = { onBuyTicket(lineId) },
@@ -198,6 +201,20 @@ fun LineDetailScreen(
                         }
                     }
 
+                    // Contact Operator копче
+                    item {
+                        OutlinedButton(
+                            onClick = { onContactOperator(s.line.operatorId) },
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Filled.Message, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.contact_operator), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    // Stops
                     item {
                         Text(
                             text = "${stringResource(R.string.stops)} (${s.stops.size})",
@@ -222,6 +239,7 @@ fun LineDetailScreen(
                         }
                     }
 
+                    // Reviews
                     item {
                         Text(
                             text = "${stringResource(R.string.reviews)} (${s.ratings.size})",
