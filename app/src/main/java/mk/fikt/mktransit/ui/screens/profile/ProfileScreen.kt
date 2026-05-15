@@ -31,6 +31,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onOperatorClick: () -> Unit,
     onFavoritesClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -171,7 +172,7 @@ fun ProfileScreen(
                         icon = Icons.Filled.Notifications,
                         title = stringResource(R.string.notifications),
                         subtitle = stringResource(R.string.notifications_subtitle),
-                        onClick = {}
+                        onClick = onNotificationsClick
                     )
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(

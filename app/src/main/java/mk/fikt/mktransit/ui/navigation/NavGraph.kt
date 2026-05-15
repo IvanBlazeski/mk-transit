@@ -20,13 +20,13 @@ import mk.fikt.mktransit.ui.screens.messages.ChatScreen
 import mk.fikt.mktransit.ui.screens.messages.MessagesScreen
 import mk.fikt.mktransit.ui.screens.operator.DriverModeScreen
 import mk.fikt.mktransit.ui.screens.operator.OperatorDashboardScreen
+import mk.fikt.mktransit.ui.screens.profile.FavoritesScreen
+import mk.fikt.mktransit.ui.screens.profile.NotificationsScreen
 import mk.fikt.mktransit.ui.screens.profile.ProfileScreen
 import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
+import mk.fikt.mktransit.ui.screens.tickets.QRScannerScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
-import mk.fikt.mktransit.ui.screens.profile.FavoritesScreen
-import mk.fikt.mktransit.ui.screens.tickets.QRScannerScreen
-
 
 @Composable
 fun NavGraph(
@@ -53,14 +53,6 @@ fun NavGraph(
                     }
                 },
                 isTablet = isTablet
-            )
-        }
-        composable(NavRoutes.FAVORITES) {
-            FavoritesScreen(
-                onBack = { navController.popBackStack() },
-                onLineClick = { lineId ->
-                    navController.navigate(NavRoutes.lineDetail(lineId))
-                }
             )
         }
 
@@ -90,9 +82,7 @@ fun NavGraph(
         }
 
         composable(NavRoutes.FORGOT_PASSWORD) {
-            ForgotPasswordScreen(
-                onBack = { navController.popBackStack() }
-            )
+            ForgotPasswordScreen(onBack = { navController.popBackStack() })
         }
 
         composable(NavRoutes.ROLE_SELECTION) {
@@ -107,9 +97,7 @@ fun NavGraph(
 
         composable(NavRoutes.HOME) {
             HomeScreen(
-                onLineClick = { lineId ->
-                    navController.navigate(NavRoutes.lineDetail(lineId))
-                },
+                onLineClick = { lineId -> navController.navigate(NavRoutes.lineDetail(lineId)) },
                 onMapClick = { navController.navigate(NavRoutes.MAP) },
                 onTicketsClick = { navController.navigate(NavRoutes.TICKETS) },
                 onMessagesClick = { navController.navigate(NavRoutes.MESSAGES) },
@@ -127,8 +115,20 @@ fun NavGraph(
                 },
                 onBack = { navController.popBackStack() },
                 onOperatorClick = { navController.navigate(NavRoutes.OPERATOR_DASHBOARD) },
-                onFavoritesClick = { navController.navigate(NavRoutes.FAVORITES) }
+                onFavoritesClick = { navController.navigate(NavRoutes.FAVORITES) },
+                onNotificationsClick = { navController.navigate(NavRoutes.NOTIFICATIONS) }
             )
+        }
+
+        composable(NavRoutes.FAVORITES) {
+            FavoritesScreen(
+                onBack = { navController.popBackStack() },
+                onLineClick = { lineId -> navController.navigate(NavRoutes.lineDetail(lineId)) }
+            )
+        }
+
+        composable(NavRoutes.NOTIFICATIONS) {
+            NotificationsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(NavRoutes.OPERATOR_DASHBOARD) {
@@ -146,9 +146,7 @@ fun NavGraph(
         }
 
         composable(NavRoutes.QR_SCANNER) {
-            QRScannerScreen(
-                onBack = { navController.popBackStack() }
-            )
+            QRScannerScreen(onBack = { navController.popBackStack() })
         }
 
         composable(
@@ -160,9 +158,7 @@ fun NavGraph(
                 lineId = lineId,
                 onBack = { navController.popBackStack() },
                 onBuyTicket = { navController.navigate(NavRoutes.ticketPurchase(it)) },
-                onContactOperator = { operatorId ->
-                    navController.navigate(NavRoutes.chat(operatorId))
-                }
+                onContactOperator = { operatorId -> navController.navigate(NavRoutes.chat(operatorId)) }
             )
         }
 
@@ -196,26 +192,20 @@ fun NavGraph(
         }
 
         composable(NavRoutes.MAP) {
-            MapScreen(
-                onBack = { navController.popBackStack() }
-            )
+            MapScreen(onBack = { navController.popBackStack() })
         }
 
         composable(NavRoutes.TICKETS) {
             MyTicketsScreen(
                 onBack = { navController.popBackStack() },
-                onTicketClick = { ticketId ->
-                    navController.navigate(NavRoutes.qrTicket(ticketId))
-                }
+                onTicketClick = { ticketId -> navController.navigate(NavRoutes.qrTicket(ticketId)) }
             )
         }
 
         composable(NavRoutes.MESSAGES) {
             MessagesScreen(
                 onBack = { navController.popBackStack() },
-                onConversationClick = { conversationId ->
-                    navController.navigate(NavRoutes.chat(conversationId))
-                }
+                onConversationClick = { conversationId -> navController.navigate(NavRoutes.chat(conversationId)) }
             )
         }
 

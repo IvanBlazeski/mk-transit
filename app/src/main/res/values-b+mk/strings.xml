@@ -50,6 +50,20 @@
     <string name="add_stop">Додај стоп</string>
     <string name="stop_name">Ime на стоп</string>
     <string name="minutes_from_start">Минути од почетокот</string>
+    <string name="scan_qr_title">Скенирај QR билет</string>
+    <string name="camera_permission_needed">Потребна е дозвола за камера</string>
+    <string name="enable_camera">Овозможи камера</string>
+    <string name="point_camera">Насочи ја камерата кон QR кодот</string>
+    <string name="valid_ticket">ВАЖЕЧКИ БИЛЕТ</string>
+    <string name="invalid_ticket">НЕВАЛИДЕН БИЛЕТ</string>
+    <string name="scan_another">Скенирај друг</string>
+    <string name="push_notifications">Push известувања</string>
+    <string name="enable_all_notifications">Овозможи сите известувања</string>
+    <string name="notify_new_messages">Известување за нови пораки</string>
+    <string name="announcements">Најави</string>
+    <string name="delays_cancellations">Задоцнувања, откажувања</string>
+    <string name="notify_before_departure">Извести пред поаѓање</string>
+    <string name="minutes_before">%d минути пред</string>
 
     <!-- Errors -->
     <string name="error_empty_email">Внесете го вашиот емаил</string>
