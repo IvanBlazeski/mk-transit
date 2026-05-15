@@ -193,11 +193,21 @@ class AuthViewModel @Inject constructor() : ViewModel() {
             try {
                 val doc = firestore.collection("users").document(uid).get().await()
                 if (doc.exists()) {
+                    val email = doc.getString("email") ?: ""
+
+                    // Само овој email е оператор
+                    val operatorEmail = "ivan@operator.mk"
+
+                    val role = when {
+                        email == operatorEmail -> UserRole.OPERATOR
+                        else -> UserRole.valueOf(doc.getString("role") ?: "PASSENGER")
+                    }
+
                     val user = User(
                         uid = uid,
-                        email = doc.getString("email") ?: "",
+                        email = email,
                         displayName = doc.getString("displayName") ?: "",
-                        role = UserRole.valueOf(doc.getString("role") ?: "PASSENGER")
+                        role = role
                     )
                     _authState.value = AuthState.Success(user)
                 } else {

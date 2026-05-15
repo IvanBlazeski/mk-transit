@@ -39,6 +39,10 @@ fun ProfileScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var hasLoggedOut by remember { mutableStateOf(false) }
 
+    val isOperator = authState is AuthState.Success &&
+            ((authState as AuthState.Success).user.role == UserRole.OPERATOR ||
+                    (authState as AuthState.Success).user.role == UserRole.BOTH)
+
     LaunchedEffect(authState) {
         if (authState is AuthState.Idle && hasLoggedOut) onLogout()
     }
@@ -174,13 +178,18 @@ fun ProfileScreen(
                         subtitle = stringResource(R.string.notifications_subtitle),
                         onClick = onNotificationsClick
                     )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    ProfileMenuItem(
-                        icon = Icons.Filled.Business,
-                        title = stringResource(R.string.operator_dashboard),
-                        subtitle = stringResource(R.string.operator_dashboard_subtitle),
-                        onClick = onOperatorClick
-                    )
+
+                    // Само за оператори
+                    if (isOperator) {
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        ProfileMenuItem(
+                            icon = Icons.Filled.Business,
+                            title = stringResource(R.string.operator_dashboard),
+                            subtitle = stringResource(R.string.operator_dashboard_subtitle),
+                            onClick = onOperatorClick
+                        )
+                    }
+
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     ProfileMenuItem(
                         icon = Icons.Filled.Language,

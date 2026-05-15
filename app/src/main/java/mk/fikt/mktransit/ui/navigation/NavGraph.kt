@@ -133,7 +133,11 @@ fun NavGraph(
 
         composable(NavRoutes.OPERATOR_DASHBOARD) {
             OperatorDashboardScreen(
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.HOME) { inclusive = false }
+                    }
+                },
                 onDriverMode = { navController.navigate(NavRoutes.DRIVER_MODE) }
             )
         }
@@ -192,20 +196,32 @@ fun NavGraph(
         }
 
         composable(NavRoutes.MAP) {
-            MapScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable(NavRoutes.TICKETS) {
-            MyTicketsScreen(
-                onBack = { navController.popBackStack() },
-                onTicketClick = { ticketId -> navController.navigate(NavRoutes.qrTicket(ticketId)) }
-            )
+            MapScreen(onBack = {
+                navController.navigate(NavRoutes.HOME) {
+                    popUpTo(NavRoutes.HOME) { inclusive = false }
+                }
+            })
         }
 
         composable(NavRoutes.MESSAGES) {
             MessagesScreen(
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.HOME) { inclusive = false }
+                    }
+                },
                 onConversationClick = { conversationId -> navController.navigate(NavRoutes.chat(conversationId)) }
+            )
+        }
+
+        composable(NavRoutes.TICKETS) {
+            MyTicketsScreen(
+                onBack = {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.HOME) { inclusive = false }
+                    }
+                },
+                onTicketClick = { ticketId -> navController.navigate(NavRoutes.qrTicket(ticketId)) }
             )
         }
 
