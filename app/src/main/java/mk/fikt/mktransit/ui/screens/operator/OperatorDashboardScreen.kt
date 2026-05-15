@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -124,21 +125,13 @@ fun OperatorDashboardScreen(
                         onClick = onDriverMode,
                         containerColor = MaterialTheme.colorScheme.secondary
                     ) {
-                        Icon(
-                            Icons.Filled.DirectionsBus,
-                            contentDescription = stringResource(R.string.driver_mode),
-                            tint = MaterialTheme.colorScheme.onSecondary
-                        )
+                        Icon(Icons.Filled.DirectionsBus, contentDescription = stringResource(R.string.driver_mode), tint = MaterialTheme.colorScheme.onSecondary)
                     }
                     FloatingActionButton(
                         onClick = { showCreateLineDialog = true },
                         containerColor = MaterialTheme.colorScheme.primary
                     ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.new_bus_line),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.new_bus_line), tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -152,10 +145,7 @@ fun OperatorDashboardScreen(
             item {
                 if (profile == null) {
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.Business, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(text = stringResource(R.string.setup_profile), fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -239,14 +229,17 @@ fun StopsDialog(
     onDismiss: () -> Unit
 ) {
     val stops by viewModel.stops.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     var newStopName by remember { mutableStateOf("") }
     var newStopMinutes by remember { mutableStateOf("") }
+    var newStopLocation by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.manage_stops)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Список на постоечки стопови
                 if (stops.isEmpty()) {
                     Text(stringResource(R.string.no_stops), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 } else {
@@ -267,9 +260,9 @@ fun StopsDialog(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-
                 Text(stringResource(R.string.add_stop), fontWeight = FontWeight.SemiBold)
 
+                // Ime на стоп
                 OutlinedTextField(
                     value = newStopName,
                     onValueChange = { newStopName = it },
@@ -278,6 +271,18 @@ fun StopsDialog(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
+
+                // Локација (текст за geocoding)
+                OutlinedTextField(
+                    value = newStopLocation,
+                    onValueChange = { newStopLocation = it },
+                    label = { Text("Локација (пр. Скопје, Центар)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+
+                // Минути
                 OutlinedTextField(
                     value = newStopMinutes,
                     onValueChange = { newStopMinutes = it },
@@ -286,12 +291,20 @@ fun StopsDialog(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
+
                 Button(
                     onClick = {
                         if (newStopName.isNotBlank()) {
-                            viewModel.addStop(lineId, newStopName, newStopMinutes.toIntOrNull() ?: 0)
+                            viewModel.addStopWithGeocoding(
+                                context = context,
+                                lineId = lineId,
+                                stopName = newStopName,
+                                locationText = newStopLocation.ifBlank { newStopName },
+                                minutesFromStart = newStopMinutes.toIntOrNull() ?: 0
+                            )
                             newStopName = ""
                             newStopMinutes = ""
+                            newStopLocation = ""
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

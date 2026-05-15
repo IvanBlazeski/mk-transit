@@ -38,10 +38,9 @@ fun MapScreen(
 ) {
     val context = LocalContext.current
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
+    val mapStops by viewModel.mapStops.collectAsStateWithLifecycle()
 
-    val locationPermission = rememberPermissionState(
-        Manifest.permission.ACCESS_FINE_LOCATION
-    )
+    val locationPermission = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
 
     LaunchedEffect(locationPermission.status.isGranted) {
         if (locationPermission.status.isGranted) {
@@ -57,10 +56,8 @@ fun MapScreen(
         } else {
             viewModel.fetchUserLocation(context)
         }
+        viewModel.loadStopsFromFirestore()
     }
-
-    val defaultLat = 41.9981
-    val defaultLon = 21.4254
 
     Scaffold(
         topBar = {
@@ -89,36 +86,52 @@ fun MapScreen(
                     MapView(ctx).apply {
                         setTileSource(TileSourceFactory.MAPNIK)
                         setMultiTouchControls(true)
-                        controller.setZoom(15.0)
+                        setBuiltInZoomControls(true)
+                        controller.setZoom(13.0)
 
-                        val startPoint = GeoPoint(
-                            userLocation?.latitude ?: defaultLat,
-                            userLocation?.longitude ?: defaultLon
-                        )
-                        controller.setCenter(startPoint)
+                        // Фиксно центрирај на Скопје — никогаш не поместувај
+                        val skopje = GeoPoint(41.9981, 21.4254)
+                        controller.setCenter(skopje)
 
+                        // Прикажи локација но НЕ следи ја
                         val myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this)
                         myLocationOverlay.enableMyLocation()
+                        myLocationOverlay.disableFollowLocation() // ← ВАЖНО
                         overlays.add(myLocationOverlay)
+                    }
+                },
+                update = { mapView ->
+                    // Само ажурирај маркери — не центрирај повторно
+                    mapView.overlays.removeAll { it is Marker }
 
-                        val stops = listOf(
+                    if (mapStops.isNotEmpty()) {
+                        mapStops.forEach { stop ->
+                            val marker = Marker(mapView)
+                            marker.position = GeoPoint(stop.latitude, stop.longitude)
+                            marker.title = stop.stopName
+                            marker.snippet = "${stop.lineNumber} - ${stop.lineName}"
+                            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            mapView.overlays.add(marker)
+                        }
+                    } else {
+                        // Fallback — фиксни стопови во Скопје
+                        val fallbackStops = listOf(
                             Triple("Центар", 41.9981, 21.4254),
                             Triple("Аеродром", 41.9700, 21.4800),
                             Triple("Железничка", 41.9964, 21.4314),
                             Triple("Кисела Вода", 41.9650, 21.4600),
                             Triple("Ново Лисиче", 42.0050, 21.4700)
                         )
-
-                        stops.forEach { (name, lat, lon) ->
-                            val marker = Marker(this)
+                        fallbackStops.forEach { (name, lat, lon) ->
+                            val marker = Marker(mapView)
                             marker.position = GeoPoint(lat, lon)
                             marker.title = name
                             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            overlays.add(marker)
+                            mapView.overlays.add(marker)
                         }
                     }
+                    mapView.invalidate()
                 },
-                update = { _ -> },
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -145,9 +158,7 @@ fun MapScreen(
                             fontSize = 14.sp
                         )
                         Text(
-                            text = if (userLocation != null)
-                                "%.4f, %.4f".format(userLocation!!.latitude, userLocation!!.longitude)
-                            else stringResource(R.string.enable_location),
+                            text = "${mapStops.size} ${stringResource(R.string.stops)}",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -163,9 +174,7 @@ fun MapScreen(
                         .padding(16.dp)
                         .fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),

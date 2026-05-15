@@ -13,6 +13,9 @@ import mk.fikt.mktransit.domain.model.BusLine
 import mk.fikt.mktransit.domain.model.LineType
 import mk.fikt.mktransit.domain.model.OperatorProfile
 import javax.inject.Inject
+import android.content.Context
+import android.location.Geocoder
+import java.util.Locale
 
 sealed class OperatorState {
     object Loading : OperatorState()
@@ -68,6 +71,63 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
                 }
             } catch (e: Exception) {
                 _state.value = OperatorState.Error(e.message ?: "Failed")
+            }
+        }
+    }
+
+    fun addStopWithGeocoding(context: Context, lineId: String, stopName: String, locationText: String, minutesFromStart: Int) {
+        viewModelScope.launch {
+            try {
+                var lat = 0.0
+                var lon = 0.0
+
+                // Nominatim API — OpenStreetMap geocoding
+                try {
+                    val query = java.net.URLEncoder.encode(locationText, "UTF-8")
+                    val url = "https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=1&countrycodes=mk"
+                    android.util.Log.d("Geocoding", "URL: $url")
+
+                    val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        java.net.URL(url).openConnection().apply {
+                            setRequestProperty("User-Agent", "MKTransit/1.0")
+                            setRequestProperty("Accept", "application/json")
+                            connectTimeout = 10000
+                            readTimeout = 10000
+                        }.getInputStream().bufferedReader().readText()
+                    }
+
+                    android.util.Log.d("Geocoding", "Response: $response")
+
+                    val jsonArray = org.json.JSONArray(response)
+                    if (jsonArray.length() > 0) {
+                        val first = jsonArray.getJSONObject(0)
+                        lat = first.getDouble("lat")
+                        lon = first.getDouble("lon")
+                        android.util.Log.d("Geocoding", "Found: $lat, $lon")
+                    } else {
+                        android.util.Log.d("Geocoding", "No results!")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("Geocoding", "Error: ${e.message}")
+                }
+
+                val order = _stops.value.size
+                val stop = hashMapOf(
+                    "stopName" to stopName,
+                    "stopOrder" to order,
+                    "minutesFromStart" to minutesFromStart,
+                    "latitude" to lat,
+                    "longitude" to lon,
+                    "locationText" to locationText
+                )
+                firestore.collection("lines")
+                    .document(lineId)
+                    .collection("stops")
+                    .add(stop).await()
+                _state.value = OperatorState.SaveSuccess
+                loadStops(lineId)
+            } catch (e: Exception) {
+                _state.value = OperatorState.Error(e.message ?: "Failed to add stop")
             }
         }
     }
