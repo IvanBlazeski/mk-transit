@@ -44,13 +44,28 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             _state.value = LineDetailState.Loading
             try {
-                // Вчитај ја линијата
                 val lineDoc = firestore.collection("lines")
                     .document(lineId).get().await()
 
+                // Земи го operatorId (Document ID во operators колекцијата)
+                val operatorProfileId = lineDoc.getString("operatorId") ?: ""
+
+                // Преведи го во вистинскиот Firebase Auth UID
+                var operatorUid = operatorProfileId
+                try {
+                    if (operatorProfileId.isNotBlank()) {
+                        val operatorDoc = firestore.collection("operators")
+                            .document(operatorProfileId)
+                            .get().await()
+                        if (operatorDoc.exists()) {
+                            operatorUid = operatorDoc.getString("uid") ?: operatorProfileId
+                        }
+                    }
+                } catch (e: Exception) { }
+
                 val line = BusLine(
                     lineId = lineDoc.id,
-                    operatorId = lineDoc.getString("operatorId") ?: "",
+                    operatorId = operatorUid, // ← Вистинскиот Auth UID
                     lineNumber = lineDoc.getString("lineNumber") ?: "",
                     lineName = lineDoc.getString("lineName")
                         ?: lineDoc.getString("LineName")
@@ -65,7 +80,6 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     ratingCount = lineDoc.getLong("ratingCount")?.toInt() ?: 0
                 )
 
-                // Вчитај ги стоповите
                 val stopsSnapshot = firestore.collection("lines")
                     .document(lineId)
                     .collection("stops")
@@ -83,7 +97,6 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     )
                 }
 
-                // Вчитај ги рејтинзите
                 val ratingsSnapshot = firestore.collection("lines")
                     .document(lineId)
                     .collection("ratings")
@@ -100,8 +113,6 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                 }
 
                 _state.value = LineDetailState.Success(line, stops, ratings)
-
-                // Провери дали е омилена
                 checkFavorite(lineId)
 
             } catch (e: Exception) {
@@ -127,9 +138,7 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
 
                 _ratingSubmitted.value = true
                 loadLineDetail(lineId)
-            } catch (e: Exception) {
-                // ignore
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -138,7 +147,6 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
             val uid = auth.currentUser?.uid ?: return@launch
             try {
                 if (_isFavorite.value) {
-                    // Отстрани од омилени
                     val favSnapshot = firestore.collection("favorites")
                         .whereEqualTo("userId", uid)
                         .whereEqualTo("lineId", lineId)
@@ -146,7 +154,6 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     favSnapshot.documents.forEach { it.reference.delete().await() }
                     _isFavorite.value = false
                 } else {
-                    // Додај во омилени
                     val fav = hashMapOf(
                         "userId" to uid,
                         "lineId" to lineId,
@@ -156,9 +163,7 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     firestore.collection("favorites").add(fav).await()
                     _isFavorite.value = true
                 }
-            } catch (e: Exception) {
-                // ignore
-            }
+            } catch (e: Exception) { }
         }
     }
 

@@ -1,6 +1,5 @@
 package mk.fikt.mktransit.ui.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -162,7 +161,9 @@ fun NavGraph(
                 lineId = lineId,
                 onBack = { navController.popBackStack() },
                 onBuyTicket = { navController.navigate(NavRoutes.ticketPurchase(it)) },
-                onContactOperator = { operatorId -> navController.navigate(NavRoutes.chat(operatorId)) }
+                onContactOperator = { operatorId, lineName ->
+                    navController.navigate(NavRoutes.chat(operatorId, lineName))
+                }
             )
         }
 
@@ -210,7 +211,9 @@ fun NavGraph(
                         popUpTo(NavRoutes.HOME) { inclusive = false }
                     }
                 },
-                onConversationClick = { conversationId -> navController.navigate(NavRoutes.chat(conversationId)) }
+                onConversationClick = { conversationId ->
+                    navController.navigate(NavRoutes.chat(conversationId, ""))
+                }
             )
         }
 
@@ -227,11 +230,17 @@ fun NavGraph(
 
         composable(
             route = NavRoutes.CHAT,
-            arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("conversationId") { type = NavType.StringType },
+                navArgument("lineName") { type = NavType.StringType; defaultValue = "" }
+            )
         ) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            val lineName = backStackEntry.arguments?.getString("lineName") ?: ""
             ChatScreen(
                 conversationId = conversationId,
+                operatorId = conversationId,
+                lineName = lineName,
                 onBack = { navController.popBackStack() }
             )
         }

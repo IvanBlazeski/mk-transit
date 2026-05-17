@@ -33,34 +33,47 @@ class MessageViewModel @Inject constructor() : ViewModel() {
     private val _newMessage = MutableStateFlow("")
     val newMessage: StateFlow<String> = _newMessage
 
+    private val _currentConversationId = MutableStateFlow("")
+    val currentConversationId: StateFlow<String> = _currentConversationId
+
     fun updateNewMessage(text: String) {
         _newMessage.value = text
     }
 
-    // Вчитај ги сите разговори на корисникот
     fun loadConversations() {
         viewModelScope.launch {
             _state.value = MessageState.Loading
             try {
                 val uid = auth.currentUser?.uid ?: return@launch
 
-                val snapshot = firestore.collection("messages")
+                // Вчитај разговори каде е патник
+                val passengerSnapshot = firestore.collection("messages")
                     .whereEqualTo("passengerId", uid)
                     .get().await()
 
-                val conversations = snapshot.documents.mapNotNull { doc ->
-                    Conversation(
-                        conversationId = doc.id,
-                        operatorId = doc.getString("operatorId") ?: "",
-                        operatorName = doc.getString("operatorName") ?: "Operator",
-                        passengerId = uid,
-                        lineId = doc.getString("lineId") ?: "",
-                        lineName = doc.getString("lineName") ?: "",
-                        lastMessage = doc.getString("lastMessage") ?: "",
-                        lastMessageAt = doc.getLong("lastMessageAt") ?: 0L,
-                        unreadCount = doc.getLong("unreadCount")?.toInt() ?: 0
-                    )
-                }
+                // Вчитај разговори каде е оператор по Auth UID
+                val operatorByUidSnapshot = firestore.collection("messages")
+                    .whereEqualTo("operatorId", uid)
+                    .get().await()
+
+                val allDocs = passengerSnapshot.documents + operatorByUidSnapshot.documents
+
+                val conversations = allDocs.mapNotNull { doc ->
+                    try {
+                        Conversation(
+                            conversationId = doc.id,
+                            operatorId = doc.getString("operatorId") ?: "",
+                            operatorName = doc.getString("operatorName") ?: "Operator",
+                            passengerId = doc.getString("passengerId") ?: "",
+                            lineId = doc.getString("lineId") ?: "",
+                            lineName = doc.getString("lineName") ?: "",
+                            lastMessage = doc.getString("lastMessage") ?: "",
+                            lastMessageAt = doc.getLong("lastMessageAt") ?: 0L,
+                            unreadCount = doc.getLong("unreadCount")?.toInt() ?: 0
+                        )
+                    } catch (e: Exception) { null }
+                }.sortedByDescending { it.lastMessageAt }
+
                 _state.value = MessageState.ConversationsLoaded(conversations)
             } catch (e: Exception) {
                 _state.value = MessageState.Error(e.message ?: "Failed to load")
@@ -68,7 +81,6 @@ class MessageViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    // Вчитај ги пораките во разговор
     fun loadMessages(conversationId: String) {
         viewModelScope.launch {
             _state.value = MessageState.Loading
@@ -102,27 +114,54 @@ class MessageViewModel @Inject constructor() : ViewModel() {
             try {
                 val uid = auth.currentUser?.uid ?: return@launch
 
-                // Провери дали постои разговор со овој оператор
-                val existing = firestore.collection("messages")
+                // Прво обиди се директно со conversationId
+                try {
+                    val directDoc = firestore.collection("messages")
+                        .document(conversationIdOrOperatorId)
+                        .get().await()
+
+                    if (directDoc.exists()) {
+                        _currentConversationId.value = conversationIdOrOperatorId
+                        loadMessages(conversationIdOrOperatorId)
+                        return@launch
+                    }
+                } catch (e: Exception) { }
+
+                // Е operatorId — барај разговор каде е патник
+                val asPassenger = firestore.collection("messages")
                     .whereEqualTo("passengerId", uid)
                     .whereEqualTo("operatorId", conversationIdOrOperatorId)
                     .get().await()
 
-                if (!existing.isEmpty) {
-                    // Постоечки разговор
-                    loadMessages(existing.documents.first().id)
-                } else {
-                    // Нов разговор — само вчитај празни пораки
-                    _state.value = MessageState.MessagesLoaded(emptyList())
+                if (!asPassenger.isEmpty) {
+                    val convId = asPassenger.documents.first().id
+                    _currentConversationId.value = convId
+                    loadMessages(convId)
+                    return@launch
                 }
+
+                // Барај разговор каде е оператор
+                val asOperator = firestore.collection("messages")
+                    .whereEqualTo("operatorId", uid)
+                    .whereEqualTo("passengerId", conversationIdOrOperatorId)
+                    .get().await()
+
+                if (!asOperator.isEmpty) {
+                    val convId = asOperator.documents.first().id
+                    _currentConversationId.value = convId
+                    loadMessages(convId)
+                    return@launch
+                }
+
+                _currentConversationId.value = ""
+                _state.value = MessageState.MessagesLoaded(emptyList())
             } catch (e: Exception) {
                 _state.value = MessageState.MessagesLoaded(emptyList())
             }
         }
     }
 
-    // Испрати порака
-    fun sendMessage(conversationId: String, receiverId: String) {
+    fun sendMessage(conversationId: String, receiverId: String, lineName: String = "") {
         viewModelScope.launch {
             val content = _newMessage.value.trim()
             if (content.isBlank()) return@launch
@@ -131,26 +170,24 @@ class MessageViewModel @Inject constructor() : ViewModel() {
                 val uid = auth.currentUser?.uid ?: return@launch
                 val now = System.currentTimeMillis()
 
-                // Провери дали постои разговор
-                val existing = firestore.collection("messages")
-                    .whereEqualTo("passengerId", uid)
-                    .whereEqualTo("operatorId", receiverId)
-                    .get().await()
-
-                val convId = if (!existing.isEmpty) {
-                    existing.documents.first().id
-                } else {
-                    // Создај нов разговор
-                    val conv = hashMapOf(
-                        "passengerId" to uid,
-                        "operatorId" to receiverId,
-                        "operatorName" to "Operator",
-                        "lastMessage" to content,
-                        "lastMessageAt" to now,
-                        "unreadCount" to 0
-                    )
-                    val ref = firestore.collection("messages").add(conv).await()
-                    ref.id
+                val convId = when {
+                    _currentConversationId.value.isNotBlank() -> _currentConversationId.value
+                    else -> {
+                        // Секогаш создај нов разговор ако нема постоечки
+                        val conv = hashMapOf(
+                            "passengerId" to uid,
+                            "operatorId" to receiverId,
+                            "operatorName" to "Operator",
+                            "lastMessage" to content,
+                            "lastMessageAt" to now,
+                            "unreadCount" to 0,
+                            "lineName" to lineName,  // ← ДОДАЈ
+                            "lineId" to ""
+                        )
+                        val ref = firestore.collection("messages").add(conv).await()
+                        _currentConversationId.value = ref.id
+                        ref.id
+                    }
                 }
 
                 val msg = hashMapOf(
@@ -161,13 +198,10 @@ class MessageViewModel @Inject constructor() : ViewModel() {
                     "sentAt" to now
                 )
 
-                firestore.collection("messages")
-                    .document(convId)
-                    .collection("msgs")
-                    .add(msg).await()
+                firestore.collection("messages").document(convId)
+                    .collection("msgs").add(msg).await()
 
-                firestore.collection("messages")
-                    .document(convId)
+                firestore.collection("messages").document(convId)
                     .update("lastMessage", content, "lastMessageAt", now)
 
                 _newMessage.value = ""
@@ -178,7 +212,6 @@ class MessageViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    // Нов разговор со оператор
     fun startConversation(
         operatorId: String,
         operatorName: String,
@@ -203,8 +236,7 @@ class MessageViewModel @Inject constructor() : ViewModel() {
                     "unreadCount" to 0
                 )
 
-                val convRef = firestore.collection("messages")
-                    .add(conversation).await()
+                val convRef = firestore.collection("messages").add(conversation).await()
 
                 val msg = hashMapOf(
                     "senderId" to uid,

@@ -18,7 +18,6 @@ object NavRoutes {
     const val QR_TICKET = "qr_ticket/{ticketId}"
     const val FAVORITES = "favorites"
     const val MESSAGES = "messages"
-    const val CHAT = "chat/{conversationId}"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
 
@@ -32,9 +31,13 @@ object NavRoutes {
     const val DRIVER_MODE = "driver_mode"
     const val QR_SCANNER = "qr_scanner"
     const val NOTIFICATIONS = "notifications"
+    const val CHAT = "chat/{conversationId}/{lineName}"
+
 
     // Helpers
     fun lineDetail(lineId: String) = "line_detail/$lineId"
+    fun chat(conversationId: String, lineName: String = "none") =
+        "chat/$conversationId/${java.net.URLEncoder.encode(lineName, "UTF-8")}"
     fun ticketPurchase(lineId: String) = "ticket_purchase/$lineId"
     fun qrTicket(ticketId: String) = "qr_ticket/$ticketId"
     fun lineEditor(lineId: String = "new") = "line_editor/$lineId"

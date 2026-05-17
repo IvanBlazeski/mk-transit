@@ -29,6 +29,7 @@ import mk.fikt.mktransit.ui.screens.tickets.formatDate
 fun ChatScreen(
     conversationId: String,
     operatorId: String = "",
+    lineName: String = "",
     onBack: () -> Unit,
     viewModel: MessageViewModel = hiltViewModel()
 ) {
@@ -37,10 +38,7 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-
     LaunchedEffect(conversationId) {
-        // Провери дали conversationId е operatorId (нов разговор)
-        // или постоечки conversationId
         viewModel.loadOrCreateConversation(conversationId, operatorId)
     }
 
@@ -54,7 +52,18 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.messages)) },
+                title = {
+                    Column {
+                        Text(stringResource(R.string.messages))
+                        if (lineName.isNotBlank() && lineName != "none") {
+                            Text(
+                                text = lineName,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -85,7 +94,7 @@ fun ChatScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     FloatingActionButton(
-                        onClick = { viewModel.sendMessage(conversationId, operatorId) },
+                        onClick = { viewModel.sendMessage(conversationId, operatorId, lineName) },
                         modifier = Modifier.size(48.dp),
                         containerColor = MaterialTheme.colorScheme.primary
                     ) {
