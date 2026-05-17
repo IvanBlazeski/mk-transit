@@ -12,6 +12,7 @@ import kotlinx.coroutines.tasks.await
 import mk.fikt.mktransit.domain.model.BusLine
 import mk.fikt.mktransit.domain.model.LineType
 import mk.fikt.mktransit.domain.model.Rating
+import mk.fikt.mktransit.domain.model.Schedule
 import mk.fikt.mktransit.domain.model.Stop
 import javax.inject.Inject
 
@@ -20,7 +21,8 @@ sealed class LineDetailState {
     data class Success(
         val line: BusLine,
         val stops: List<Stop>,
-        val ratings: List<Rating>
+        val ratings: List<Rating>,
+        val schedule: List<Schedule> = emptyList()
     ) : LineDetailState()
     data class Error(val message: String) : LineDetailState()
 }
@@ -40,6 +42,9 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
     private val _ratingSubmitted = MutableStateFlow(false)
     val ratingSubmitted: StateFlow<Boolean> = _ratingSubmitted
 
+    private val _schedule = MutableStateFlow<List<Schedule>>(emptyList())
+    val schedule: StateFlow<List<Schedule>> = _schedule
+
     fun loadLineDetail(lineId: String) {
         viewModelScope.launch {
             _state.value = LineDetailState.Loading
@@ -47,16 +52,12 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                 val lineDoc = firestore.collection("lines")
                     .document(lineId).get().await()
 
-                // Земи го operatorId (Document ID во operators колекцијата)
                 val operatorProfileId = lineDoc.getString("operatorId") ?: ""
-
-                // Преведи го во вистинскиот Firebase Auth UID
                 var operatorUid = operatorProfileId
                 try {
                     if (operatorProfileId.isNotBlank()) {
                         val operatorDoc = firestore.collection("operators")
-                            .document(operatorProfileId)
-                            .get().await()
+                            .document(operatorProfileId).get().await()
                         if (operatorDoc.exists()) {
                             operatorUid = operatorDoc.getString("uid") ?: operatorProfileId
                         }
@@ -65,7 +66,7 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
 
                 val line = BusLine(
                     lineId = lineDoc.id,
-                    operatorId = operatorUid, // ← Вистинскиот Auth UID
+                    operatorId = operatorUid,
                     lineNumber = lineDoc.getString("lineNumber") ?: "",
                     lineName = lineDoc.getString("lineName")
                         ?: lineDoc.getString("LineName")
@@ -83,10 +84,8 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                 )
 
                 val stopsSnapshot = firestore.collection("lines")
-                    .document(lineId)
-                    .collection("stops")
-                    .orderBy("stopOrder")
-                    .get().await()
+                    .document(lineId).collection("stops")
+                    .orderBy("stopOrder").get().await()
 
                 val stops = stopsSnapshot.documents.map { doc ->
                     Stop(
@@ -100,9 +99,7 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                 }
 
                 val ratingsSnapshot = firestore.collection("lines")
-                    .document(lineId)
-                    .collection("ratings")
-                    .get().await()
+                    .document(lineId).collection("ratings").get().await()
 
                 val ratings = ratingsSnapshot.documents.map { doc ->
                     Rating(
@@ -114,12 +111,49 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     )
                 }
 
-                _state.value = LineDetailState.Success(line, stops, ratings)
+                // Вчитај возен ред
+                val scheduleSnapshot = firestore.collection("lines")
+                    .document(lineId).collection("schedule").get().await()
+
+                val scheduleList = scheduleSnapshot.documents.mapNotNull { doc ->
+                    try {
+                        Schedule(
+                            scheduleId = doc.id,
+                            direction = doc.getString("direction") ?: "FORWARD",
+                            departureTime = doc.getString("departureTime") ?: "",
+                            days = (doc.get("days") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                        )
+                    } catch (e: Exception) { null }
+                }.sortedBy { it.departureTime }
+
+                _schedule.value = scheduleList
+                _state.value = LineDetailState.Success(line, stops, ratings, scheduleList)
                 checkFavorite(lineId)
 
             } catch (e: Exception) {
                 _state.value = LineDetailState.Error(e.message ?: "Failed to load line")
             }
+        }
+    }
+
+    fun loadSchedule(lineId: String) {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("lines")
+                    .document(lineId).collection("schedule").get().await()
+
+                val schedules = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        Schedule(
+                            scheduleId = doc.id,
+                            direction = doc.getString("direction") ?: "FORWARD",
+                            departureTime = doc.getString("departureTime") ?: "",
+                            days = (doc.get("days") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                        )
+                    } catch (e: Exception) { null }
+                }.sortedBy { it.departureTime }
+                _schedule.value = schedules
+            } catch (e: Exception) { }
         }
     }
 
@@ -133,11 +167,8 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     "comment" to comment,
                     "createdAt" to System.currentTimeMillis()
                 )
-                firestore.collection("lines")
-                    .document(lineId)
-                    .collection("ratings")
-                    .add(rating).await()
-
+                firestore.collection("lines").document(lineId)
+                    .collection("ratings").add(rating).await()
                 _ratingSubmitted.value = true
                 loadLineDetail(lineId)
             } catch (e: Exception) { }

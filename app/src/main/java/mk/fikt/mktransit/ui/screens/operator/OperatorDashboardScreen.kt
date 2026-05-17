@@ -3,8 +3,10 @@ package mk.fikt.mktransit.ui.screens.operator
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -41,6 +43,7 @@ fun OperatorDashboardScreen(
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
     var showStopsDialog by remember { mutableStateOf<String?>(null) }
     var showPricesDialog by remember { mutableStateOf<BusLine?>(null) }
+    var showScheduleDialog by remember { mutableStateOf<BusLine?>(null) }
 
     LaunchedEffect(Unit) { viewModel.loadOperatorProfile() }
 
@@ -82,27 +85,18 @@ fun OperatorDashboardScreen(
                 TextButton(onClick = {
                     viewModel.deleteLine(lineId)
                     showDeleteDialog = null
-                }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-                }
+                }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                TextButton(onClick = { showDeleteDialog = null }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
 
     showStopsDialog?.let { lineId ->
-        StopsDialog(
-            lineId = lineId,
-            viewModel = viewModel,
-            onDismiss = { showStopsDialog = null }
-        )
+        StopsDialog(lineId = lineId, viewModel = viewModel, onDismiss = { showStopsDialog = null })
     }
 
-    // Дијалог за ажурирање цени
     showPricesDialog?.let { line ->
         EditPricesDialog(
             line = line,
@@ -111,6 +105,15 @@ fun OperatorDashboardScreen(
                 viewModel.updateLinePrices(line.lineId, p1, p2)
                 showPricesDialog = null
             }
+        )
+    }
+
+    showScheduleDialog?.let { line ->
+        ScheduleDialog(
+            lineId = line.lineId,
+            lineName = line.lineName,
+            viewModel = viewModel,
+            onDismiss = { showScheduleDialog = null }
         )
     }
 
@@ -214,13 +217,130 @@ fun OperatorDashboardScreen(
                                 showStopsDialog = line.lineId
                                 viewModel.loadStops(line.lineId)
                             },
-                            onEditPrices = { showPricesDialog = line }
+                            onEditPrices = { showPricesDialog = line },
+                            onSchedule = {
+                                showScheduleDialog = line
+                                viewModel.loadSchedule(line.lineId)
+                            }
                         )
                     }
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScheduleDialog(
+    lineId: String,
+    lineName: String,
+    viewModel: OperatorViewModel,
+    onDismiss: () -> Unit
+) {
+    val schedule by viewModel.schedule.collectAsStateWithLifecycle()
+    var direction by remember { mutableStateOf("FORWARD") }
+    var departureTime by remember { mutableStateOf("") }
+    var selectedDays by remember { mutableStateOf(setOf<String>()) }
+
+    val allDays = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+    val dayLabels = mapOf(
+        "MON" to "Пон", "TUE" to "Вто", "WED" to "Сре",
+        "THU" to "Чет", "FRI" to "Пет", "SAT" to "Саб", "SUN" to "Нед"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Возен ред — $lineName") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                val forwardSchedule = schedule.filter { it.direction == "FORWARD" }
+                val returnSchedule = schedule.filter { it.direction == "RETURN" }
+
+                if (forwardSchedule.isNotEmpty()) {
+                    Text("→ Во еден правец", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                    forwardSchedule.forEach { s ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "🕐 ${s.departureTime} — ${s.days.mapNotNull { dayLabels[it] }.joinToString(", ")}",
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+
+                if (returnSchedule.isNotEmpty()) {
+                    Text("← Повратно", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                    returnSchedule.forEach { s ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "🕐 ${s.departureTime} — ${s.days.mapNotNull { dayLabels[it] }.joinToString(", ")}",
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+
+                HorizontalDivider()
+                Text("Додај поаѓање", fontWeight = FontWeight.SemiBold)
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = direction == "FORWARD", onClick = { direction = "FORWARD" }, label = { Text("→ Напред") })
+                    FilterChip(selected = direction == "RETURN", onClick = { direction = "RETURN" }, label = { Text("← Назад") })
+                }
+
+                OutlinedTextField(
+                    value = departureTime,
+                    onValueChange = { departureTime = it },
+                    label = { Text("Час на поаѓање (пр. 08:00)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+
+                Text("Денови:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    allDays.forEach { day ->
+                        FilterChip(
+                            selected = day in selectedDays,
+                            onClick = {
+                                selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
+                            },
+                            label = { Text(dayLabels[day] ?: day, fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (departureTime.isNotBlank() && selectedDays.isNotEmpty()) {
+                            viewModel.addSchedule(lineId, direction, departureTime, selectedDays.toList())
+                            departureTime = ""
+                            selectedDays = emptySet()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Додај поаѓање")
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) } }
+    )
 }
 
 @Composable
@@ -233,37 +353,14 @@ fun EditPricesDialog(line: BusLine, onDismiss: () -> Unit, onSave: (Float, Float
         title = { Text("Ажурирај цени — ${line.lineName}") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = p1,
-                    onValueChange = { p1 = it },
-                    label = { Text("Цена - Во еден правец (MKD)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = p2,
-                    onValueChange = { p2 = it },
-                    label = { Text("Цена - Повратна (MKD)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
-                )
+                OutlinedTextField(value = p1, onValueChange = { p1 = it }, label = { Text("Цена - Во еден правец (MKD)") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                OutlinedTextField(value = p2, onValueChange = { p2 = it }, label = { Text("Цена - Повратна (MKD)") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                onSave(
-                    p1.toFloatOrNull() ?: line.priceOneWay,
-                    p2.toFloatOrNull() ?: line.priceReturn
-                )
-            }) { Text(stringResource(R.string.save)) }
+            TextButton(onClick = { onSave(p1.toFloatOrNull() ?: line.priceOneWay, p2.toFloatOrNull() ?: line.priceReturn) }) { Text(stringResource(R.string.save)) }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -287,9 +384,7 @@ fun StopsDialog(lineId: String, viewModel: OperatorViewModel, onDismiss: () -> U
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = stop.stopName, fontWeight = FontWeight.Medium)
-                                if (stop.minutesFromStart > 0) {
-                                    Text(text = "+${stop.minutesFromStart} min", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                                }
+                                if (stop.minutesFromStart > 0) Text(text = "+${stop.minutesFromStart} min", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             }
                             IconButton(onClick = { viewModel.deleteStop(lineId, stop.stopId) }) {
                                 Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
@@ -339,46 +434,64 @@ fun OperatorLineCard(
     line: BusLine,
     onDelete: () -> Unit,
     onManageStops: () -> Unit = {},
-    onEditPrices: () -> Unit = {}
+    onEditPrices: () -> Unit = {},
+    onSchedule: () -> Unit = {}
 ) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(48.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(text = line.lineNumber, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Горен ред — број + ime + статус
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(text = line.lineNumber, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = line.lineName, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                Text(text = "${line.startStop} → ${line.endStop}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                if (line.priceOneWay > 0) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = line.lineName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(text = "${line.startStop} → ${line.endStop}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+                Surface(
+                    color = if (line.isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
                     Text(
-                        text = "${line.priceOneWay.toInt()} / ${line.priceReturn.toInt()} MKD",
+                        text = if (line.isActive) stringResource(R.string.active) else stringResource(R.string.inactive),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = if (line.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                     )
                 }
             }
-            Surface(
-                color = if (line.isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = if (line.isActive) stringResource(R.string.active) else stringResource(R.string.inactive),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    fontSize = 11.sp,
-                    color = if (line.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-            }
-            IconButton(onClick = onEditPrices) {
-                Icon(Icons.Filled.AttachMoney, contentDescription = "Edit prices", tint = MaterialTheme.colorScheme.secondary)
-            }
-            IconButton(onClick = onManageStops) {
-                Icon(Icons.Filled.Place, contentDescription = "Stops", tint = MaterialTheme.colorScheme.primary)
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Долен ред — цени + акции
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text(text = "Еден правец: ${line.priceOneWay.toInt()} MKD", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(text = "Повратна: ${line.priceReturn.toInt()} MKD", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                }
+                Row {
+                    IconButton(onClick = onSchedule, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.Schedule, contentDescription = "Возен ред", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = onEditPrices, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.AttachMoney, contentDescription = "Цени", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = onManageStops, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.Place, contentDescription = "Стопови", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Избриши", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                    }
+                }
             }
         }
     }

@@ -330,4 +330,61 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    private val _schedule = MutableStateFlow<List<mk.fikt.mktransit.domain.model.Schedule>>(emptyList())
+    val schedule: StateFlow<List<mk.fikt.mktransit.domain.model.Schedule>> = _schedule
+
+    fun loadSchedule(lineId: String) {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("lines")
+                    .document(lineId)
+                    .collection("schedule")
+                    .orderBy("direction")
+                    .get().await()
+
+                val schedules = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        mk.fikt.mktransit.domain.model.Schedule(
+                            scheduleId = doc.id,
+                            direction = doc.getString("direction") ?: "FORWARD",
+                            departureTime = doc.getString("departureTime") ?: "",
+                            days = (doc.get("days") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                        )
+                    } catch (e: Exception) { null }
+                }
+                _schedule.value = schedules
+            } catch (e: Exception) { }
+        }
+    }
+
+    fun addSchedule(lineId: String, direction: String, departureTime: String, days: List<String>) {
+        viewModelScope.launch {
+            try {
+                val entry = hashMapOf(
+                    "direction" to direction,
+                    "departureTime" to departureTime,
+                    "days" to days
+                )
+                firestore.collection("lines")
+                    .document(lineId)
+                    .collection("schedule")
+                    .add(entry).await()
+                loadSchedule(lineId)
+            } catch (e: Exception) { }
+        }
+    }
+
+    fun deleteSchedule(lineId: String, scheduleId: String) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("lines")
+                    .document(lineId)
+                    .collection("schedule")
+                    .document(scheduleId)
+                    .delete().await()
+                loadSchedule(lineId)
+            } catch (e: Exception) { }
+        }
+    }
+
 }

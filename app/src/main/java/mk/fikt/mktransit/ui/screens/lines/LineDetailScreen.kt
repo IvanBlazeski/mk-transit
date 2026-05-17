@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.Rating
+import mk.fikt.mktransit.domain.model.Schedule
 import mk.fikt.mktransit.domain.model.Stop
 import mk.fikt.mktransit.viewmodel.LineDetailState
 import mk.fikt.mktransit.viewmodel.LineDetailViewModel
@@ -28,7 +29,7 @@ fun LineDetailScreen(
     lineId: String,
     onBack: () -> Unit,
     onBuyTicket: (String) -> Unit,
-    onContactOperator: (String, String) -> Unit = { _, _ -> }, // operatorId, lineName
+    onContactOperator: (String, String) -> Unit = { _, _ -> },
     viewModel: LineDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -37,6 +38,11 @@ fun LineDetailScreen(
     var showRatingDialog by remember { mutableStateOf(false) }
     var selectedStars by remember { mutableStateOf(0) }
     var comment by remember { mutableStateOf("") }
+
+    val dayLabels = mapOf(
+        "MON" to "Пон", "TUE" to "Вто", "WED" to "Сре",
+        "THU" to "Чет", "FRI" to "Пет", "SAT" to "Саб", "SUN" to "Нед"
+    )
 
     LaunchedEffect(lineId) {
         viewModel.loadLineDetail(lineId)
@@ -71,19 +77,15 @@ fun LineDetailScreen(
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (selectedStars > 0) {
-                            viewModel.submitRating(lineId, selectedStars, comment)
-                            showRatingDialog = false
-                        }
+                TextButton(onClick = {
+                    if (selectedStars > 0) {
+                        viewModel.submitRating(lineId, selectedStars, comment)
+                        showRatingDialog = false
                     }
-                ) { Text(stringResource(R.string.submit_rating)) }
+                }) { Text(stringResource(R.string.submit_rating)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRatingDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+                TextButton(onClick = { showRatingDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -112,8 +114,7 @@ fun LineDetailScreen(
                         Icon(
                             if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                             contentDescription = stringResource(R.string.favorites),
-                            tint = if (isFavorite) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.onPrimary
+                            tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -142,22 +143,14 @@ fun LineDetailScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Line Info Card
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.size(52.dp)
-                                    ) {
+                                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(52.dp)) {
                                         Box(contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = s.line.lineNumber,
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 18.sp
-                                            )
+                                            Text(text = s.line.lineNumber, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                         }
                                     }
                                     Spacer(modifier = Modifier.width(16.dp))
@@ -173,9 +166,7 @@ fun LineDetailScreen(
                                     Icon(Icons.Filled.Star, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = if (s.line.ratingCount > 0)
-                                            "%.1f (${s.line.ratingCount})".format(s.line.averageRating)
-                                        else stringResource(R.string.no_reviews),
+                                        text = if (s.line.ratingCount > 0) "%.1f (${s.line.ratingCount})".format(s.line.averageRating) else stringResource(R.string.no_reviews),
                                         fontSize = 14.sp
                                     )
                                     Spacer(modifier = Modifier.weight(1f))
@@ -187,46 +178,109 @@ fun LineDetailScreen(
                         }
                     }
 
+                    // Buy Ticket
                     item {
-                        Button(
-                            onClick = { onBuyTicket(lineId) },
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
+                        Button(onClick = { onBuyTicket(lineId) }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(12.dp)) {
                             Icon(Icons.Filled.ConfirmationNumber, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.buy_ticket), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
+                    // Contact Operator
                     item {
-                        OutlinedButton(
-                            onClick = { onContactOperator(s.line.operatorId, s.line.lineName) },
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
+                        OutlinedButton(onClick = { onContactOperator(s.line.operatorId, s.line.lineName) }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(12.dp)) {
                             Icon(Icons.Filled.Message, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.contact_operator), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
+                    // Возен ред
                     item {
-                        Text(
-                            text = "${stringResource(R.string.stops)} (${s.stops.size})",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
+                        Text(text = "Возен ред", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+
+                    item {
+                        val forwardSchedule = s.schedule.filter { it.direction == "FORWARD" }
+                        val returnSchedule = s.schedule.filter { it.direction == "RETURN" }
+
+                        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if (forwardSchedule.isEmpty() && returnSchedule.isEmpty()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Нема возен ред", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 14.sp)
+                                    }
+                                }
+
+                                if (forwardSchedule.isNotEmpty()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("${s.line.startStop} → ${s.line.endStop}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    forwardSchedule.forEach { schedule ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(start = 22.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "🕐 ${schedule.departureTime}",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Text(
+                                                text = schedule.days.mapNotNull { dayLabels[it] }.joinToString(", "),
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (forwardSchedule.isNotEmpty() && returnSchedule.isNotEmpty()) {
+                                    HorizontalDivider()
+                                }
+
+                                if (returnSchedule.isNotEmpty()) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Filled.SyncAlt, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("${s.line.endStop} → ${s.line.startStop}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                                    }
+                                    returnSchedule.forEach { schedule ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(start = 22.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "🕐 ${schedule.departureTime}",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Text(
+                                                text = schedule.days.mapNotNull { dayLabels[it] }.joinToString(", "),
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Стопови
+                    item {
+                        Text(text = "${stringResource(R.string.stops)} (${s.stops.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
 
                     if (s.stops.isEmpty()) {
                         item {
                             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-                                Text(
-                                    text = stringResource(R.string.no_stops),
-                                    modifier = Modifier.padding(16.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
+                                Text(text = stringResource(R.string.no_stops), modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             }
                         }
                     } else {
@@ -235,22 +289,15 @@ fun LineDetailScreen(
                         }
                     }
 
+                    // Оценки
                     item {
-                        Text(
-                            text = "${stringResource(R.string.reviews)} (${s.ratings.size})",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
+                        Text(text = "${stringResource(R.string.reviews)} (${s.ratings.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
 
                     if (s.ratings.isEmpty()) {
                         item {
                             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-                                Text(
-                                    text = stringResource(R.string.no_reviews),
-                                    modifier = Modifier.padding(16.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
+                                Text(text = stringResource(R.string.no_reviews), modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             }
                         }
                     } else {
