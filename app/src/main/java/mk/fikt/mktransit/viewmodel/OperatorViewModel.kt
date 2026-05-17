@@ -240,6 +240,17 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun updateLinePrices(lineId: String, priceOneWay: Float, priceReturn: Float) {
+        viewModelScope.launch {
+            try {
+                firestore.collection("lines").document(lineId)
+                    .update("priceOneWay", priceOneWay, "priceReturn", priceReturn).await()
+                val operatorId = _profile.value?.operatorId ?: return@launch
+                loadOperatorLines(operatorId)
+            } catch (e: Exception) { }
+        }
+    }
+
     // Избриши линија
     fun deleteLine(lineId: String) {
         viewModelScope.launch {

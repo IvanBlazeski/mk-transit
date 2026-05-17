@@ -40,6 +40,7 @@ fun OperatorDashboardScreen(
     var showCreateProfileDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
     var showStopsDialog by remember { mutableStateOf<String?>(null) }
+    var showPricesDialog by remember { mutableStateOf<BusLine?>(null) }
 
     LaunchedEffect(Unit) { viewModel.loadOperatorProfile() }
 
@@ -98,6 +99,18 @@ fun OperatorDashboardScreen(
             lineId = lineId,
             viewModel = viewModel,
             onDismiss = { showStopsDialog = null }
+        )
+    }
+
+    // Дијалог за ажурирање цени
+    showPricesDialog?.let { line ->
+        EditPricesDialog(
+            line = line,
+            onDismiss = { showPricesDialog = null },
+            onSave = { p1, p2 ->
+                viewModel.updateLinePrices(line.lineId, p1, p2)
+                showPricesDialog = null
+            }
         )
     }
 
@@ -200,13 +213,58 @@ fun OperatorDashboardScreen(
                             onManageStops = {
                                 showStopsDialog = line.lineId
                                 viewModel.loadStops(line.lineId)
-                            }
+                            },
+                            onEditPrices = { showPricesDialog = line }
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun EditPricesDialog(line: BusLine, onDismiss: () -> Unit, onSave: (Float, Float) -> Unit) {
+    var p1 by remember { mutableStateOf(line.priceOneWay.toInt().toString()) }
+    var p2 by remember { mutableStateOf(line.priceReturn.toInt().toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ажурирај цени — ${line.lineName}") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = p1,
+                    onValueChange = { p1 = it },
+                    label = { Text("Цена - Во еден правец (MKD)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = p2,
+                    onValueChange = { p2 = it },
+                    label = { Text("Цена - Повратна (MKD)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(
+                    p1.toFloatOrNull() ?: line.priceOneWay,
+                    p2.toFloatOrNull() ?: line.priceReturn
+                )
+            }) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
 }
 
 @Composable
@@ -277,7 +335,12 @@ fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: 
 }
 
 @Composable
-fun OperatorLineCard(line: BusLine, onDelete: () -> Unit, onManageStops: () -> Unit = {}) {
+fun OperatorLineCard(
+    line: BusLine,
+    onDelete: () -> Unit,
+    onManageStops: () -> Unit = {},
+    onEditPrices: () -> Unit = {}
+) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(48.dp)) {
@@ -291,7 +354,7 @@ fun OperatorLineCard(line: BusLine, onDelete: () -> Unit, onManageStops: () -> U
                 Text(text = "${line.startStop} → ${line.endStop}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 if (line.priceOneWay > 0) {
                     Text(
-                        text = "${line.priceOneWay.toInt()} MKD / ${line.priceReturn.toInt()} MKD",
+                        text = "${line.priceOneWay.toInt()} / ${line.priceReturn.toInt()} MKD",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -307,6 +370,9 @@ fun OperatorLineCard(line: BusLine, onDelete: () -> Unit, onManageStops: () -> U
                     fontSize = 11.sp,
                     color = if (line.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
+            }
+            IconButton(onClick = onEditPrices) {
+                Icon(Icons.Filled.AttachMoney, contentDescription = "Edit prices", tint = MaterialTheme.colorScheme.secondary)
             }
             IconButton(onClick = onManageStops) {
                 Icon(Icons.Filled.Place, contentDescription = "Stops", tint = MaterialTheme.colorScheme.primary)
@@ -379,38 +445,16 @@ fun CreateLineDialog(onDismiss: () -> Unit, onCreate: (String, String, LineType,
                 }
                 OutlinedTextField(value = startStop, onValueChange = { startStop = it }, label = { Text(stringResource(R.string.start_stop)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
                 OutlinedTextField(value = endStop, onValueChange = { endStop = it }, label = { Text(stringResource(R.string.end_stop)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
-
                 HorizontalDivider()
                 Text("Цени (MKD)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-
-                OutlinedTextField(
-                    value = priceOneWay,
-                    onValueChange = { priceOneWay = it },
-                    label = { Text("Цена - Во еден правец") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = priceReturn,
-                    onValueChange = { priceReturn = it },
-                    label = { Text("Цена - Повратна") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                OutlinedTextField(value = priceOneWay, onValueChange = { priceOneWay = it }, label = { Text("Цена - Во еден правец") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                OutlinedTextField(value = priceReturn, onValueChange = { priceReturn = it }, label = { Text("Цена - Повратна") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 if (lineNumber.isNotBlank() && lineName.isNotBlank()) {
-                    onCreate(
-                        lineNumber, lineName, lineType, startStop, endStop,
-                        priceOneWay.toFloatOrNull() ?: 50f,
-                        priceReturn.toFloatOrNull() ?: 90f
-                    )
+                    onCreate(lineNumber, lineName, lineType, startStop, endStop, priceOneWay.toFloatOrNull() ?: 50f, priceReturn.toFloatOrNull() ?: 90f)
                 }
             }) { Text(stringResource(R.string.create)) }
         },
