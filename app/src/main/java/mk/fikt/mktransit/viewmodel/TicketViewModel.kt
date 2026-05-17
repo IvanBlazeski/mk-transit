@@ -65,7 +65,8 @@ class TicketViewModel @Inject constructor(
         lineNumber: String,
         ticketType: String,
         price: Float,
-        quantity: Int = 1
+        quantity: Int = 1,
+        paymentMethod: String = "CARD"
     ) {
         viewModelScope.launch {
             _ticketState.value = TicketState.Loading
@@ -93,7 +94,7 @@ class TicketViewModel @Inject constructor(
                         lineName = lineName,
                         lineNumber = lineNumber,
                         ticketType = ticketType,
-                        status = "PAID",
+                        status = if (paymentMethod == "CASH") "PENDING" else "PAID", // ← ПРОМЕНА
                         qrContent = qrContent,
                         pricePaid = pricePerTicket,
                         purchasedAt = now,
@@ -108,7 +109,8 @@ class TicketViewModel @Inject constructor(
                         "lineId" to lineId,
                         "lineName" to lineName,
                         "ticketType" to ticketType,
-                        "status" to "PAID",
+                        "status" to if (paymentMethod == "CASH") "PENDING" else "PAID", // ← ПРОМЕНА
+                        "paymentMethod" to paymentMethod, // ←НОВО
                         "qrContent" to qrContent,
                         "pricePaid" to pricePerTicket,
                         "purchasedAt" to now,
