@@ -77,7 +77,9 @@ class LineDetailViewModel @Inject constructor() : ViewModel() {
                     endStop = lineDoc.getString("endStop") ?: "",
                     isActive = lineDoc.getBoolean("isActive") ?: true,
                     averageRating = lineDoc.getDouble("averageRating")?.toFloat() ?: 0f,
-                    ratingCount = lineDoc.getLong("ratingCount")?.toInt() ?: 0
+                    ratingCount = lineDoc.getLong("ratingCount")?.toInt() ?: 0,
+                    priceOneWay = lineDoc.getDouble("priceOneWay")?.toFloat() ?: 50f,
+                    priceReturn = lineDoc.getDouble("priceReturn")?.toFloat() ?: 90f
                 )
 
                 val stopsSnapshot = firestore.collection("lines")

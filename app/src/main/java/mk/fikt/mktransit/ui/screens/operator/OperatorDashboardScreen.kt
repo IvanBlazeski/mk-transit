@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,8 +66,8 @@ fun OperatorDashboardScreen(
     if (showCreateLineDialog) {
         CreateLineDialog(
             onDismiss = { showCreateLineDialog = false },
-            onCreate = { number, name, type, start, end ->
-                viewModel.createLine(number, name, type, start, end)
+            onCreate = { number, name, type, start, end, priceOneWay, priceReturn ->
+                viewModel.createLine(number, name, type, start, end, priceOneWay, priceReturn)
             }
         )
     }
@@ -117,20 +119,11 @@ fun OperatorDashboardScreen(
         },
         floatingActionButton = {
             if (profile != null) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SmallFloatingActionButton(
-                        onClick = onDriverMode,
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SmallFloatingActionButton(onClick = onDriverMode, containerColor = MaterialTheme.colorScheme.secondary) {
                         Icon(Icons.Filled.DirectionsBus, contentDescription = stringResource(R.string.driver_mode), tint = MaterialTheme.colorScheme.onSecondary)
                     }
-                    FloatingActionButton(
-                        onClick = { showCreateLineDialog = true },
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ) {
+                    FloatingActionButton(onClick = { showCreateLineDialog = true }, containerColor = MaterialTheme.colorScheme.primary) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.new_bus_line), tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
@@ -157,11 +150,7 @@ fun OperatorDashboardScreen(
                         }
                     }
                 } else {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                    ) {
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(52.dp)) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -190,9 +179,7 @@ fun OperatorDashboardScreen(
                     }
                 }
 
-                item {
-                    Text(text = stringResource(R.string.your_lines), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
+                item { Text(text = stringResource(R.string.your_lines), fontWeight = FontWeight.Bold, fontSize = 18.sp) }
 
                 if (lines.isEmpty()) {
                     item {
@@ -223,11 +210,7 @@ fun OperatorDashboardScreen(
 }
 
 @Composable
-fun StopsDialog(
-    lineId: String,
-    viewModel: OperatorViewModel,
-    onDismiss: () -> Unit
-) {
+fun StopsDialog(lineId: String, viewModel: OperatorViewModel, onDismiss: () -> Unit) {
     val stops by viewModel.stops.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var newStopName by remember { mutableStateOf("") }
@@ -239,7 +222,6 @@ fun StopsDialog(
         title = { Text(stringResource(R.string.manage_stops)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Список на постоечки стопови
                 if (stops.isEmpty()) {
                     Text(stringResource(R.string.no_stops), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 } else {
@@ -258,57 +240,19 @@ fun StopsDialog(
                         HorizontalDivider()
                     }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(stringResource(R.string.add_stop), fontWeight = FontWeight.SemiBold)
-
-                // Ime на стоп
-                OutlinedTextField(
-                    value = newStopName,
-                    onValueChange = { newStopName = it },
-                    label = { Text(stringResource(R.string.stop_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-
-                // Локација (текст за geocoding)
-                OutlinedTextField(
-                    value = newStopLocation,
-                    onValueChange = { newStopLocation = it },
-                    label = { Text("Локација (пр. Скопје, Центар)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-
-                // Минути
-                OutlinedTextField(
-                    value = newStopMinutes,
-                    onValueChange = { newStopMinutes = it },
-                    label = { Text(stringResource(R.string.minutes_from_start)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true
-                )
-
+                OutlinedTextField(value = newStopName, onValueChange = { newStopName = it }, label = { Text(stringResource(R.string.stop_name)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
+                OutlinedTextField(value = newStopLocation, onValueChange = { newStopLocation = it }, label = { Text("Локација (пр. Skopje, Centar)") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
+                OutlinedTextField(value = newStopMinutes, onValueChange = { newStopMinutes = it }, label = { Text(stringResource(R.string.minutes_from_start)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
                 Button(
                     onClick = {
                         if (newStopName.isNotBlank()) {
-                            viewModel.addStopWithGeocoding(
-                                context = context,
-                                lineId = lineId,
-                                stopName = newStopName,
-                                locationText = newStopLocation.ifBlank { newStopName },
-                                minutesFromStart = newStopMinutes.toIntOrNull() ?: 0
-                            )
-                            newStopName = ""
-                            newStopMinutes = ""
-                            newStopLocation = ""
+                            viewModel.addStopWithGeocoding(context = context, lineId = lineId, stopName = newStopName, locationText = newStopLocation.ifBlank { newStopName }, minutesFromStart = newStopMinutes.toIntOrNull() ?: 0)
+                            newStopName = ""; newStopMinutes = ""; newStopLocation = ""
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -316,19 +260,12 @@ fun StopsDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) }
-        }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) } }
     )
 }
 
 @Composable
-fun StatCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
+fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
     Card(modifier = modifier, shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
@@ -340,11 +277,7 @@ fun StatCard(
 }
 
 @Composable
-fun OperatorLineCard(
-    line: BusLine,
-    onDelete: () -> Unit,
-    onManageStops: () -> Unit = {}
-) {
+fun OperatorLineCard(line: BusLine, onDelete: () -> Unit, onManageStops: () -> Unit = {}) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(48.dp)) {
@@ -356,6 +289,13 @@ fun OperatorLineCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = line.lineName, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                 Text(text = "${line.startStop} → ${line.endStop}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                if (line.priceOneWay > 0) {
+                    Text(
+                        text = "${line.priceOneWay.toInt()} MKD / ${line.priceReturn.toInt()} MKD",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             Surface(
                 color = if (line.isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
@@ -399,9 +339,7 @@ fun CreateProfileDialog(onDismiss: () -> Unit, onSave: (String, String, String, 
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (companyName.isNotBlank()) onSave(companyName, description, email, phone, area) }) {
-                Text(stringResource(R.string.save))
-            }
+            TextButton(onClick = { if (companyName.isNotBlank()) onSave(companyName, description, email, phone, area) }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
@@ -409,12 +347,14 @@ fun CreateProfileDialog(onDismiss: () -> Unit, onSave: (String, String, String, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateLineDialog(onDismiss: () -> Unit, onCreate: (String, String, LineType, String, String) -> Unit) {
+fun CreateLineDialog(onDismiss: () -> Unit, onCreate: (String, String, LineType, String, String, Float, Float) -> Unit) {
     var lineNumber by remember { mutableStateOf("") }
     var lineName by remember { mutableStateOf("") }
     var lineType by remember { mutableStateOf(LineType.BUS) }
     var startStop by remember { mutableStateOf("") }
     var endStop by remember { mutableStateOf("") }
+    var priceOneWay by remember { mutableStateOf("") }
+    var priceReturn by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -439,12 +379,40 @@ fun CreateLineDialog(onDismiss: () -> Unit, onCreate: (String, String, LineType,
                 }
                 OutlinedTextField(value = startStop, onValueChange = { startStop = it }, label = { Text(stringResource(R.string.start_stop)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
                 OutlinedTextField(value = endStop, onValueChange = { endStop = it }, label = { Text(stringResource(R.string.end_stop)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), singleLine = true)
+
+                HorizontalDivider()
+                Text("Цени (MKD)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+
+                OutlinedTextField(
+                    value = priceOneWay,
+                    onValueChange = { priceOneWay = it },
+                    label = { Text("Цена - Во еден правец") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                OutlinedTextField(
+                    value = priceReturn,
+                    onValueChange = { priceReturn = it },
+                    label = { Text("Цена - Повратна") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (lineNumber.isNotBlank() && lineName.isNotBlank()) onCreate(lineNumber, lineName, lineType, startStop, endStop) }) {
-                Text(stringResource(R.string.create))
-            }
+            TextButton(onClick = {
+                if (lineNumber.isNotBlank() && lineName.isNotBlank()) {
+                    onCreate(
+                        lineNumber, lineName, lineType, startStop, endStop,
+                        priceOneWay.toFloatOrNull() ?: 50f,
+                        priceReturn.toFloatOrNull() ?: 90f
+                    )
+                }
+            }) { Text(stringResource(R.string.create)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )

@@ -14,8 +14,6 @@ import mk.fikt.mktransit.domain.model.LineType
 import mk.fikt.mktransit.domain.model.OperatorProfile
 import javax.inject.Inject
 import android.content.Context
-import android.location.Geocoder
-import java.util.Locale
 
 sealed class OperatorState {
     object Loading : OperatorState()
@@ -193,7 +191,9 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
                             endStop = doc.getString("endStop") ?: "",
                             isActive = doc.getBoolean("isActive") ?: true,
                             averageRating = doc.getDouble("averageRating")?.toFloat() ?: 0f,
-                            ratingCount = doc.getLong("ratingCount")?.toInt() ?: 0
+                            ratingCount = doc.getLong("ratingCount")?.toInt() ?: 0,
+                            priceOneWay = doc.getDouble("priceOneWay")?.toFloat() ?: 50f,
+                            priceReturn = doc.getDouble("priceReturn")?.toFloat() ?: 90f
                         )
                     } catch (e: Exception) { null }
                 }
@@ -210,7 +210,9 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
         lineName: String,
         lineType: LineType,
         startStop: String,
-        endStop: String
+        endStop: String,
+        priceOneWay: Float = 50f,
+        priceReturn: Float = 90f
     ) {
         viewModelScope.launch {
             _state.value = OperatorState.Loading
@@ -225,7 +227,9 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
                     "endStop" to endStop,
                     "isActive" to true,
                     "averageRating" to 0.0,
-                    "ratingCount" to 0
+                    "ratingCount" to 0,
+                    "priceOneWay" to priceOneWay,
+                    "priceReturn" to priceReturn
                 )
                 firestore.collection("lines").add(line).await()
                 _state.value = OperatorState.SaveSuccess

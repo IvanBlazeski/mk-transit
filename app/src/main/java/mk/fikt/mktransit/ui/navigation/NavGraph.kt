@@ -32,24 +32,18 @@ fun NavGraph(
     navController: NavHostController = rememberNavController(),
     isTablet: Boolean = false
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = NavRoutes.WELCOME
-    ) {
+    NavHost(navController = navController, startDestination = NavRoutes.WELCOME) {
+
         composable(NavRoutes.WELCOME) {
             WelcomeScreen(
                 onEmailClick = { navController.navigate(NavRoutes.LOGIN) },
                 onGoogleClick = { },
                 onFacebookClick = { },
                 onAnonymousClick = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
                 },
                 onLoginSuccess = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
                 },
                 isTablet = isTablet
             )
@@ -58,9 +52,7 @@ fun NavGraph(
         composable(NavRoutes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
                 },
                 onNavigateToRegister = { navController.navigate(NavRoutes.REGISTER) },
                 onNavigateToForgotPassword = { navController.navigate(NavRoutes.FORGOT_PASSWORD) },
@@ -71,9 +63,7 @@ fun NavGraph(
         composable(NavRoutes.REGISTER) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.navigate(NavRoutes.ROLE_SELECTION) {
-                        popUpTo(NavRoutes.WELCOME) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.ROLE_SELECTION) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
                 },
                 onNavigateToLogin = { navController.navigate(NavRoutes.LOGIN) },
                 onBack = { navController.popBackStack() }
@@ -87,9 +77,7 @@ fun NavGraph(
         composable(NavRoutes.ROLE_SELECTION) {
             RoleSelectionScreen(
                 onRoleSelected = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.ROLE_SELECTION) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.ROLE_SELECTION) { inclusive = true } }
                 }
             )
         }
@@ -108,9 +96,7 @@ fun NavGraph(
         composable(NavRoutes.PROFILE) {
             ProfileScreen(
                 onLogout = {
-                    navController.navigate(NavRoutes.WELCOME) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    navController.navigate(NavRoutes.WELCOME) { popUpTo(0) { inclusive = true } }
                 },
                 onBack = { navController.popBackStack() },
                 onOperatorClick = { navController.navigate(NavRoutes.OPERATOR_DASHBOARD) },
@@ -133,9 +119,7 @@ fun NavGraph(
         composable(NavRoutes.OPERATOR_DASHBOARD) {
             OperatorDashboardScreen(
                 onBack = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.HOME) { inclusive = false }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = false } }
                 },
                 onDriverMode = { navController.navigate(NavRoutes.DRIVER_MODE) }
             )
@@ -172,10 +156,11 @@ fun NavGraph(
             arguments = listOf(navArgument("lineId") { type = NavType.StringType })
         ) { backStackEntry ->
             val lineId = backStackEntry.arguments?.getString("lineId") ?: ""
+            // Цените се вчитуваат директно во TicketPurchaseScreen од Firestore
             TicketPurchaseScreen(
                 lineId = lineId,
-                lineName = "Bus Line",
-                lineNumber = "1",
+                lineName = "",
+                lineNumber = "",
                 onBack = { navController.popBackStack() },
                 onPurchaseSuccess = { ticketId ->
                     navController.navigate(NavRoutes.qrTicket(ticketId)) {
@@ -190,26 +175,19 @@ fun NavGraph(
             arguments = listOf(navArgument("ticketId") { type = NavType.StringType })
         ) { backStackEntry ->
             val ticketId = backStackEntry.arguments?.getString("ticketId") ?: ""
-            QRTicketScreen(
-                ticketId = ticketId,
-                onBack = { navController.popBackStack() }
-            )
+            QRTicketScreen(ticketId = ticketId, onBack = { navController.popBackStack() })
         }
 
         composable(NavRoutes.MAP) {
             MapScreen(onBack = {
-                navController.navigate(NavRoutes.HOME) {
-                    popUpTo(NavRoutes.HOME) { inclusive = false }
-                }
+                navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = false } }
             })
         }
 
         composable(NavRoutes.MESSAGES) {
             MessagesScreen(
                 onBack = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.HOME) { inclusive = false }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = false } }
                 },
                 onConversationClick = { conversationId ->
                     navController.navigate(NavRoutes.chat(conversationId, ""))
@@ -220,9 +198,7 @@ fun NavGraph(
         composable(NavRoutes.TICKETS) {
             MyTicketsScreen(
                 onBack = {
-                    navController.navigate(NavRoutes.HOME) {
-                        popUpTo(NavRoutes.HOME) { inclusive = false }
-                    }
+                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = false } }
                 },
                 onTicketClick = { ticketId -> navController.navigate(NavRoutes.qrTicket(ticketId)) }
             )

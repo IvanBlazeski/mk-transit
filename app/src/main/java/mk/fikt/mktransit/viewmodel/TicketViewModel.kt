@@ -64,56 +64,65 @@ class TicketViewModel @Inject constructor(
         lineName: String,
         lineNumber: String,
         ticketType: String,
-        price: Float
+        price: Float,
+        quantity: Int = 1
     ) {
         viewModelScope.launch {
             _ticketState.value = TicketState.Loading
             try {
                 val uid = auth.currentUser?.uid ?: throw Exception("Not logged in")
-                val ticketId = UUID.randomUUID().toString()
                 val now = System.currentTimeMillis()
-                val validUntil = when (ticketType) {
-                    "SINGLE" -> now + (2 * 60 * 60 * 1000)
-                    "DAILY" -> now + (24 * 60 * 60 * 1000)
-                    "WEEKLY" -> now + (7 * 24 * 60 * 60 * 1000)
-                    else -> now + (2 * 60 * 60 * 1000)
+                var lastTicketId = ""
+
+                // Создај quantity број на билети
+                repeat(quantity) { index ->
+                    val ticketId = UUID.randomUUID().toString()
+                    val pricePerTicket = price / quantity
+                    val validUntil = when (ticketType) {
+                        "ONE_WAY" -> now + (24 * 60 * 60 * 1000) // 24 часа
+                        "RETURN" -> now + (48 * 60 * 60 * 1000) // 48 часа
+                        else -> now + (24 * 60 * 60 * 1000)
+                    }
+
+                    val qrContent = "MKTRANSIT|$ticketId|$lineId|$uid|$now|$ticketType"
+
+                    val ticket = TicketEntity(
+                        ticketId = ticketId,
+                        userId = uid,
+                        lineId = lineId,
+                        lineName = lineName,
+                        lineNumber = lineNumber,
+                        ticketType = ticketType,
+                        status = "PAID",
+                        qrContent = qrContent,
+                        pricePaid = pricePerTicket,
+                        purchasedAt = now,
+                        validUntil = validUntil
+                    )
+
+                    ticketDao.insertTicket(ticket)
+
+                    val firestoreTicket = hashMapOf(
+                        "ticketId" to ticketId,
+                        "userId" to uid,
+                        "lineId" to lineId,
+                        "lineName" to lineName,
+                        "ticketType" to ticketType,
+                        "status" to "PAID",
+                        "qrContent" to qrContent,
+                        "pricePaid" to pricePerTicket,
+                        "purchasedAt" to now,
+                        "validUntil" to validUntil,
+                        "quantity" to quantity
+                    )
+                    firestore.collection("tickets")
+                        .document(ticketId)
+                        .set(firestoreTicket).await()
+
+                    if (index == 0) lastTicketId = ticketId
                 }
 
-                val qrContent = "MKTRANSIT|$ticketId|$lineId|$uid|$now"
-
-                val ticket = TicketEntity(
-                    ticketId = ticketId,
-                    userId = uid,
-                    lineId = lineId,
-                    lineName = lineName,
-                    lineNumber = lineNumber,
-                    ticketType = ticketType,
-                    status = "PAID",
-                    qrContent = qrContent,
-                    pricePaid = price,
-                    purchasedAt = now,
-                    validUntil = validUntil
-                )
-
-                ticketDao.insertTicket(ticket)
-
-                val firestoreTicket = hashMapOf(
-                    "ticketId" to ticketId,
-                    "userId" to uid,
-                    "lineId" to lineId,
-                    "lineName" to lineName,
-                    "ticketType" to ticketType,
-                    "status" to "PAID",
-                    "qrContent" to qrContent,
-                    "pricePaid" to price,
-                    "purchasedAt" to now,
-                    "validUntil" to validUntil
-                )
-                firestore.collection("tickets")
-                    .document(ticketId)
-                    .set(firestoreTicket).await()
-
-                _ticketState.value = TicketState.PurchaseSuccess(ticketId)
+                _ticketState.value = TicketState.PurchaseSuccess(lastTicketId)
             } catch (e: Exception) {
                 _ticketState.value = TicketState.Error(e.message ?: "Purchase failed")
             }

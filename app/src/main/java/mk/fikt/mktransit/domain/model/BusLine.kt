@@ -12,7 +12,10 @@ data class BusLine(
     val averageRating: Float = 0f,
     val ratingCount: Int = 0,
     val scheduleStart: Long = 0L,
-    val scheduleEnd: Long = 0L
+    val scheduleEnd: Long = 0L,
+    val priceOneWay: Float = 50f,
+    val priceReturn: Float = 90f
+
 )
 
 enum class LineType {
