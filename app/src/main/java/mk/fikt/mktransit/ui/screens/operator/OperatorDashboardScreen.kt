@@ -31,7 +31,6 @@ import mk.fikt.mktransit.viewmodel.OperatorViewModel
 @Composable
 fun OperatorDashboardScreen(
     onBack: () -> Unit,
-    onDriverMode: () -> Unit,
     viewModel: OperatorViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -135,13 +134,11 @@ fun OperatorDashboardScreen(
         },
         floatingActionButton = {
             if (profile != null) {
-                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SmallFloatingActionButton(onClick = onDriverMode, containerColor = MaterialTheme.colorScheme.secondary) {
-                        Icon(Icons.Filled.DirectionsBus, contentDescription = stringResource(R.string.driver_mode), tint = MaterialTheme.colorScheme.onSecondary)
-                    }
-                    FloatingActionButton(onClick = { showCreateLineDialog = true }, containerColor = MaterialTheme.colorScheme.primary) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.new_bus_line), tint = MaterialTheme.colorScheme.onPrimary)
-                    }
+                FloatingActionButton(
+                    onClick = { showCreateLineDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.new_bus_line), tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

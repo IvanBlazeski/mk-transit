@@ -146,7 +146,6 @@ fun NavGraph(
                 onBack = {
                     navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = false } }
                 },
-                onDriverMode = { navController.navigate(NavRoutes.DRIVER_MODE) }
             )
         }
 
