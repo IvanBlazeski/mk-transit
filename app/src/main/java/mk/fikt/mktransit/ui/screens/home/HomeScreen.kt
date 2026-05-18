@@ -14,12 +14,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import mk.fikt.mktransit.R
 import mk.fikt.mktransit.domain.model.BusLine
 import mk.fikt.mktransit.domain.model.LineType
@@ -40,15 +44,52 @@ fun HomeScreen(
     val lineState by lineViewModel.lineState.collectAsStateWithLifecycle()
     val searchQuery by lineViewModel.searchQuery.collectAsStateWithLifecycle()
 
+    var showNotificationBanner by remember { mutableStateOf(false) }
+    var notificationMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
+            val db = FirebaseFirestore.getInstance()
+
+            // Вземи ги сите билети на патникот
+            val tickets = db.collection("tickets")
+                .whereEqualTo("userId", uid)
+                .get().await()
+
+            val lineIds = tickets.documents
+                .mapNotNull { it.getString("lineId") }
+                .distinct()
+                .take(10) // whereIn лимит
+
+            if (lineIds.isEmpty()) return@LaunchedEffect
+
+            // Вчитај нотификации за тие линии
+            val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000)
+
+            val notifications = db.collection("lineNotifications")
+                .whereIn("lineId", lineIds)
+                .get().await()
+
+            // Филтрирај само последните 30 минути
+            val recent = notifications.documents
+                .filter { (it.getLong("timestamp") ?: 0L) > thirtyMinutesAgo }
+                .sortedByDescending { it.getLong("timestamp") ?: 0L }
+                .firstOrNull()
+
+            recent?.let {
+                notificationMessage = it.getString("message") ?: ""
+                showNotificationBanner = notificationMessage.isNotBlank()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeNotif", "Error: ${e.message}")
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = { Text(text = stringResource(R.string.app_name), fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = onProfileClick) {
                         Icon(Icons.Filled.Person, contentDescription = stringResource(R.string.nav_profile))
@@ -63,148 +104,78 @@ fun HomeScreen(
         },
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = {},
-                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_home)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onMapClick,
-                    icon = { Icon(Icons.Filled.Map, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_map)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onTicketsClick,
-                    icon = { Icon(Icons.Filled.ConfirmationNumber, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_tickets)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onMessagesClick,
-                    icon = { Icon(Icons.Filled.Message, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_messages)) }
-                )
+                NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Filled.Home, contentDescription = null) }, label = { Text(stringResource(R.string.nav_home)) })
+                NavigationBarItem(selected = false, onClick = onMapClick, icon = { Icon(Icons.Filled.Map, contentDescription = null) }, label = { Text(stringResource(R.string.nav_map)) })
+                NavigationBarItem(selected = false, onClick = onTicketsClick, icon = { Icon(Icons.Filled.ConfirmationNumber, contentDescription = null) }, label = { Text(stringResource(R.string.nav_tickets)) })
+                NavigationBarItem(selected = false, onClick = onMessagesClick, icon = { Icon(Icons.Filled.Message, contentDescription = null) }, label = { Text(stringResource(R.string.nav_messages)) })
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+
+            // Нотификација банер од возач
+            if (showNotificationBanner && notificationMessage.isNotBlank()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.DirectionsBus, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(text = notificationMessage, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { showNotificationBanner = false }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.Close, contentDescription = "Затвори", tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { lineViewModel.updateSearch(it) },
                 placeholder = { Text(stringResource(R.string.search_hint)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true
             )
 
             when (val state = lineState) {
                 is LineState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 }
-
                 is LineState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.WifiOff,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                            Icon(Icons.Filled.WifiOff, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(R.string.could_not_load),
-                                color = MaterialTheme.colorScheme.error
-                            )
+                            Text(text = stringResource(R.string.could_not_load), color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = { lineViewModel.loadLines() }) {
-                                Text(stringResource(R.string.retry))
-                            }
+                            Button(onClick = { lineViewModel.loadLines() }) { Text(stringResource(R.string.retry)) }
                         }
                     }
                 }
-
                 is LineState.Success -> {
                     val filtered = lineViewModel.getFilteredLines(state.lines)
-
                     if (filtered.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    Icons.Filled.SearchOff,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                )
+                                Icon(Icons.Filled.SearchOff, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(R.string.no_lines_found),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
+                                Text(text = stringResource(R.string.no_lines_found), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             }
                         }
                     } else {
                         if (isTablet) {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                contentPadding = PaddingValues(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                item(span = { GridItemSpan(2) }) {
-                                    Text(
-                                        text = stringResource(R.string.bus_lines),
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                                items(filtered) { line ->
-                                    BusLineCard(
-                                        line = line,
-                                        onClick = { onLineClick(line.lineId) }
-                                    )
-                                }
+                            LazyVerticalGrid(columns = GridCells.Fixed(2), contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
+                                item(span = { GridItemSpan(2) }) { Text(text = stringResource(R.string.bus_lines), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                                items(filtered) { line -> BusLineCard(line = line, onClick = { onLineClick(line.lineId) }) }
                             }
                         } else {
-                            LazyColumn(
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                item {
-                                    Text(
-                                        text = stringResource(R.string.bus_lines),
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                                items(filtered) { line ->
-                                    BusLineCard(
-                                        line = line,
-                                        onClick = { onLineClick(line.lineId) }
-                                    )
-                                }
+                            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                item { Text(text = stringResource(R.string.bus_lines), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                                items(filtered) { line -> BusLineCard(line = line, onClick = { onLineClick(line.lineId) }) }
                             }
                         }
                     }
@@ -215,77 +186,32 @@ fun HomeScreen(
 }
 
 @Composable
-fun BusLineCard(
-    line: BusLine,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(52.dp)
-            ) {
+fun BusLineCard(line: BusLine, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(52.dp)) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = line.lineNumber,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = if (line.lineNumber.length > 3) 12.sp else 16.sp
-                    )
+                    Text(text = line.lineNumber, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = if (line.lineNumber.length > 3) 12.sp else 16.sp)
                 }
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = line.lineName,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
-                )
+                Text(text = line.lineName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Filled.TripOrigin,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.Filled.TripOrigin, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${line.startStop} → ${line.endStop}",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                    Text(text = "${line.startStop} → ${line.endStop}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
                 if (line.ratingCount > 0) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.secondary
-                        )
+                        Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "%.1f (${line.ratingCount})".format(line.averageRating),
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                        Text(text = "%.1f (${line.ratingCount})".format(line.averageRating), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                 }
             }
-
             Surface(
                 color = when (line.lineType) {
                     LineType.BUS -> MaterialTheme.colorScheme.primaryContainer
@@ -294,12 +220,7 @@ fun BusLineCard(
                 },
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
-                    text = line.lineType.name,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text(text = line.lineType.name, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Medium)
             }
         }
     }

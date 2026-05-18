@@ -214,8 +214,30 @@ fun DriverModeScreen(
             Button(
                 onClick = {
                     if (selectedLineId.isNotBlank()) {
-                        isActive = !isActive
-                        if (!isActive) {
+                        val newIsActive = !isActive
+                        isActive = newIsActive
+
+                        if (newIsActive) {
+                            val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                            val db = FirebaseFirestore.getInstance()
+
+                            // Зачувај нотификација
+                            val notif = hashMapOf(
+                                "lineId" to selectedLineId,
+                                "lineName" to selectedLineName,
+                                "message" to "Автобусот за $selectedLineName тргна!",
+                                "driverUid" to uid,
+                                "timestamp" to System.currentTimeMillis(),
+                                "isRead" to false
+                            )
+                            db.collection("lineNotifications").add(notif)
+                                .addOnSuccessListener {
+                                    android.util.Log.d("Driver", "Notification saved!")
+                                }
+                                .addOnFailureListener { e ->
+                                    android.util.Log.e("Driver", "Error: ${e.message}")
+                                }
+                        } else {
                             FirebaseFirestore.getInstance()
                                 .collection("vehicleLocations")
                                 .document(selectedLineId)
