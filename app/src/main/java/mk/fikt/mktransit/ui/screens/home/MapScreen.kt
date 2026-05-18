@@ -39,7 +39,7 @@ fun MapScreen(
     val context = LocalContext.current
     val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
     val mapStops by viewModel.mapStops.collectAsStateWithLifecycle()
-
+    val activeVehicles by viewModel.activeVehicles.collectAsStateWithLifecycle()
     val locationPermission = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
 
     LaunchedEffect(locationPermission.status.isGranted) {
@@ -57,6 +57,7 @@ fun MapScreen(
             viewModel.fetchUserLocation(context)
         }
         viewModel.loadStopsFromFirestore()
+        viewModel.loadActiveVehicles()
     }
 
     Scaffold(
@@ -88,22 +89,18 @@ fun MapScreen(
                         setMultiTouchControls(true)
                         setBuiltInZoomControls(true)
                         controller.setZoom(13.0)
-
-                        // Фиксно центрирај на Скопје — никогаш не поместувај
                         val skopje = GeoPoint(41.9981, 21.4254)
                         controller.setCenter(skopje)
-
-                        // Прикажи локација но НЕ следи ја
                         val myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(ctx), this)
                         myLocationOverlay.enableMyLocation()
-                        myLocationOverlay.disableFollowLocation() // ← ВАЖНО
+                        myLocationOverlay.disableFollowLocation()
                         overlays.add(myLocationOverlay)
                     }
                 },
                 update = { mapView ->
-                    // Само ажурирај маркери — не центрирај повторно
                     mapView.overlays.removeAll { it is Marker }
 
+                    // Стопови маркери
                     if (mapStops.isNotEmpty()) {
                         mapStops.forEach { stop ->
                             val marker = Marker(mapView)
@@ -114,7 +111,6 @@ fun MapScreen(
                             mapView.overlays.add(marker)
                         }
                     } else {
-                        // Fallback — фиксни стопови во Скопје
                         val fallbackStops = listOf(
                             Triple("Центар", 41.9981, 21.4254),
                             Triple("Аеродром", 41.9700, 21.4800),
@@ -130,6 +126,17 @@ fun MapScreen(
                             mapView.overlays.add(marker)
                         }
                     }
+
+                    // Возила маркери
+                    activeVehicles.forEach { vehicle ->
+                        val marker = Marker(mapView)
+                        marker.position = GeoPoint(vehicle.latitude, vehicle.longitude)
+                        marker.title = "🚌 ${vehicle.lineNumber} - ${vehicle.lineName}"
+                        marker.snippet = "Во живо"
+                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                        mapView.overlays.add(marker)
+                    }
+
                     mapView.invalidate()
                 },
                 modifier = Modifier.fillMaxSize()
@@ -144,10 +151,7 @@ fun MapScreen(
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
@@ -176,18 +180,11 @@ fun MapScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.LocationOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.width(8.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.location_permission_needed),
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 13.sp
-                            )
+                            Text(text = stringResource(R.string.location_permission_needed), fontWeight = FontWeight.Medium, fontSize = 13.sp)
                         }
                         TextButton(onClick = { locationPermission.launchPermissionRequest() }) {
                             Text(stringResource(R.string.enable))

@@ -40,6 +40,7 @@ class MapViewModel @Inject constructor() : ViewModel() {
 
     init {
         loadStopsFromFirestore()
+        loadActiveVehicles()
     }
 
     fun setPermissionGranted(granted: Boolean) {
@@ -92,6 +93,43 @@ class MapViewModel @Inject constructor() : ViewModel() {
                     }
                 }
                 _mapStops.value = allStops
+            } catch (e: Exception) { }
+        }
+    }
+    data class ActiveVehicle(
+        val lineId: String,
+        val lineName: String,
+        val lineNumber: String,
+        val latitude: Double,
+        val longitude: Double
+    )
+
+    private val _activeVehicles = MutableStateFlow<List<ActiveVehicle>>(emptyList())
+    val activeVehicles: StateFlow<List<ActiveVehicle>> = _activeVehicles
+
+    fun loadActiveVehicles() {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("vehicleLocations")
+                    .whereEqualTo("isActive", true)
+                    .get().await()
+
+                val vehicles = snapshot.documents.mapNotNull { doc ->
+                    val lat = doc.getDouble("latitude") ?: return@mapNotNull null
+                    val lon = doc.getDouble("longitude") ?: return@mapNotNull null
+                    val lineId = doc.getString("lineId") ?: return@mapNotNull null
+
+                    // Земи го името на линијата
+                    val lineDoc = firestore.collection("lines").document(lineId).get().await()
+                    ActiveVehicle(
+                        lineId = lineId,
+                        lineName = lineDoc.getString("lineName") ?: "",
+                        lineNumber = lineDoc.getString("lineNumber") ?: "",
+                        latitude = lat,
+                        longitude = lon
+                    )
+                }
+                _activeVehicles.value = vehicles
             } catch (e: Exception) { }
         }
     }
