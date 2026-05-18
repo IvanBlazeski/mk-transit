@@ -11,5 +11,5 @@ data class User(
 )
 
 enum class UserRole {
-    PASSENGER, OPERATOR, BOTH
+    PASSENGER, OPERATOR, DRIVER, BOTH
 }

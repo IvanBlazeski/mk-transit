@@ -1,6 +1,13 @@
 package mk.fikt.mktransit.ui.navigation
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -26,6 +33,8 @@ import mk.fikt.mktransit.ui.screens.tickets.MyTicketsScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRScannerScreen
 import mk.fikt.mktransit.ui.screens.tickets.QRTicketScreen
 import mk.fikt.mktransit.ui.screens.tickets.TicketPurchaseScreen
+import mk.fikt.mktransit.viewmodel.AuthState
+import mk.fikt.mktransit.viewmodel.AuthViewModel
 
 @Composable
 fun NavGraph(
@@ -42,8 +51,16 @@ fun NavGraph(
                 onAnonymousClick = {
                     navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
                 },
-                onLoginSuccess = {
-                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
+                onLoginSuccess = { role ->
+                    if (role == "DRIVER") {
+                        navController.navigate(NavRoutes.DRIVER_MODE) {
+                            popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(NavRoutes.HOME) {
+                            popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                        }
+                    }
                 },
                 isTablet = isTablet
             )
@@ -51,8 +68,16 @@ fun NavGraph(
 
         composable(NavRoutes.LOGIN) {
             LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.WELCOME) { inclusive = true } }
+                onLoginSuccess = { role ->
+                    if (role == "DRIVER") {
+                        navController.navigate(NavRoutes.DRIVER_MODE) {
+                            popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(NavRoutes.HOME) {
+                            popUpTo(NavRoutes.WELCOME) { inclusive = true }
+                        }
+                    }
                 },
                 onNavigateToRegister = { navController.navigate(NavRoutes.REGISTER) },
                 onNavigateToForgotPassword = { navController.navigate(NavRoutes.FORGOT_PASSWORD) },
@@ -126,9 +151,25 @@ fun NavGraph(
         }
 
         composable(NavRoutes.DRIVER_MODE) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            val authState by authViewModel.authState.collectAsStateWithLifecycle()
+            var wasSuccess by remember { mutableStateOf(false) }
+
+            LaunchedEffect(authState) {
+                if (authState is AuthState.Success) {
+                    wasSuccess = true
+                }
+                if (wasSuccess && authState is AuthState.Idle) {
+                    navController.navigate(NavRoutes.WELCOME) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+
             DriverModeScreen(
                 onBack = { navController.popBackStack() },
-                onScanQR = { navController.navigate(NavRoutes.QR_SCANNER) }
+                onScanQR = { navController.navigate(NavRoutes.QR_SCANNER) },
+                isStandaloneDriver = true
             )
         }
 
@@ -156,7 +197,6 @@ fun NavGraph(
             arguments = listOf(navArgument("lineId") { type = NavType.StringType })
         ) { backStackEntry ->
             val lineId = backStackEntry.arguments?.getString("lineId") ?: ""
-            // Цените се вчитуваат директно во TicketPurchaseScreen од Firestore
             TicketPurchaseScreen(
                 lineId = lineId,
                 lineName = "",

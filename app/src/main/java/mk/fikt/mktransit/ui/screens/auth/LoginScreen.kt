@@ -32,7 +32,7 @@ import mk.fikt.mktransit.viewmodel.AuthViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (String) -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onBack: () -> Unit,
@@ -46,11 +46,15 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
+    var loginAttempted by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Success -> onLoginSuccess()
-            else -> {}
+        if (loginAttempted) {
+            when (val s = authState) {
+                is AuthState.Success -> onLoginSuccess(s.user.role.name)
+                is AuthState.NeedsRoleSelection -> onLoginSuccess("PASSENGER")
+                else -> {}
+            }
         }
     }
 
@@ -166,7 +170,10 @@ fun LoginScreen(
                         passwordError = context.getString(R.string.error_empty_password)
                         valid = false
                     }
-                    if (valid) viewModel.loginWithEmail(email, password)
+                    if (valid) {
+                        loginAttempted = true  // ← ДОДАЈ ОВА
+                        viewModel.loginWithEmail(email, password)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

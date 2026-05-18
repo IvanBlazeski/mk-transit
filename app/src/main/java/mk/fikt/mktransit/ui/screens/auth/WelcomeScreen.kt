@@ -12,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -38,14 +40,13 @@ fun WelcomeScreen(
     onGoogleClick: () -> Unit,
     onFacebookClick: () -> Unit,
     onAnonymousClick: () -> Unit,
-    onLoginSuccess: () -> Unit = {},
+    onLoginSuccess: (String) -> Unit = {},
     isTablet: Boolean = false,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val authState by viewModel.authState.collectAsStateWithLifecycle()
 
-    // Google Sign-In Launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -62,7 +63,6 @@ fun WelcomeScreen(
         }
     }
 
-    // Facebook
     val callbackManager = remember {
         com.facebook.CallbackManager.Factory.create()
     }
@@ -84,11 +84,14 @@ fun WelcomeScreen(
             .registerCallback(callbackManager, facebookCallback)
     }
 
+    var loginStarted by remember { mutableStateOf(false) }
+
     LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Success -> onLoginSuccess()
-            is AuthState.NeedsRoleSelection -> onLoginSuccess()
-            else -> {}
+        if (loginStarted && authState is AuthState.Success) {
+            onLoginSuccess((authState as AuthState.Success).user.role.name)
+        }
+        if (loginStarted && authState is AuthState.NeedsRoleSelection) {
+            onLoginSuccess("PASSENGER")
         }
     }
 
@@ -147,28 +150,18 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Email
                 Button(
                     onClick = onEmailClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isTablet) 60.dp else 52.dp),
+                    modifier = Modifier.fillMaxWidth().height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = TextOnPrimary,
-                        contentColor = PrimaryBlue
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = TextOnPrimary, contentColor = PrimaryBlue)
                 ) {
-                    Text(
-                        text = stringResource(R.string.btn_login_email),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = if (isTablet) 18.sp else 16.sp
-                    )
+                    Text(text = stringResource(R.string.btn_login_email), fontWeight = FontWeight.SemiBold, fontSize = if (isTablet) 18.sp else 16.sp)
                 }
 
-                // Google
                 OutlinedButton(
                     onClick = {
+                        loginStarted = true
                         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                             .requestIdToken(context.getString(R.string.default_web_client_id))
                             .requestEmail()
@@ -176,61 +169,34 @@ fun WelcomeScreen(
                         val client = GoogleSignIn.getClient(context, gso)
                         googleSignInLauncher.launch(client.signInIntent)
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isTablet) 60.dp else 52.dp),
+                    modifier = Modifier.fillMaxWidth().height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = TextOnPrimary
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.5.dp, TextOnPrimary.copy(alpha = 0.7f)
-                    )
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextOnPrimary),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, TextOnPrimary.copy(alpha = 0.7f))
                 ) {
-                    Text(
-                        text = stringResource(R.string.btn_login_google),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = if (isTablet) 18.sp else 16.sp
-                    )
+                    Text(text = stringResource(R.string.btn_login_google), fontWeight = FontWeight.SemiBold, fontSize = if (isTablet) 18.sp else 16.sp)
                 }
 
-                // Facebook
                 OutlinedButton(
                     onClick = {
+                        loginStarted = true
                         com.facebook.login.LoginManager.getInstance()
                             .logInWithReadPermissions(
-                                context as androidx.activity.result.ActivityResultRegistryOwner,                                callbackManager,
+                                context as androidx.activity.result.ActivityResultRegistryOwner,
+                                callbackManager,
                                 listOf("public_profile")
                             )
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isTablet) 60.dp else 52.dp),
+                    modifier = Modifier.fillMaxWidth().height(if (isTablet) 60.dp else 52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = TextOnPrimary
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.5.dp, TextOnPrimary.copy(alpha = 0.7f)
-                    )
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextOnPrimary),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, TextOnPrimary.copy(alpha = 0.7f))
                 ) {
-                    Text(
-                        text = stringResource(R.string.btn_login_facebook),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = if (isTablet) 18.sp else 16.sp
-                    )
+                    Text(text = stringResource(R.string.btn_login_facebook), fontWeight = FontWeight.SemiBold, fontSize = if (isTablet) 18.sp else 16.sp)
                 }
 
-                // Anonymous
-                TextButton(
-                    onClick = onAnonymousClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.btn_login_anonymous),
-                        color = TextOnPrimary.copy(alpha = 0.75f),
-                        fontSize = if (isTablet) 17.sp else 15.sp
-                    )
+                TextButton(onClick = onAnonymousClick, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = stringResource(R.string.btn_login_anonymous), color = TextOnPrimary.copy(alpha = 0.75f), fontSize = if (isTablet) 17.sp else 15.sp)
                 }
             }
 

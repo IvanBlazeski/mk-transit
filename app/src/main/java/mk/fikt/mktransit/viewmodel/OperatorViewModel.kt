@@ -387,4 +387,31 @@ class OperatorViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    fun loadAllLines() {
+        viewModelScope.launch {
+            try {
+                val snapshot = firestore.collection("lines").get().await()
+                val lines = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        BusLine(
+                            lineId = doc.id,
+                            operatorId = doc.getString("operatorId") ?: "",
+                            lineNumber = doc.getString("lineNumber") ?: "",
+                            lineName = doc.getString("lineName") ?: "",
+                            lineType = try { LineType.valueOf(doc.getString("lineType") ?: "BUS") } catch (e: Exception) { LineType.BUS },
+                            startStop = doc.getString("startStop") ?: "",
+                            endStop = doc.getString("endStop") ?: "",
+                            isActive = doc.getBoolean("isActive") ?: true,
+                            averageRating = doc.getDouble("averageRating")?.toFloat() ?: 0f,
+                            ratingCount = doc.getLong("ratingCount")?.toInt() ?: 0,
+                            priceOneWay = doc.getDouble("priceOneWay")?.toFloat() ?: 50f,
+                            priceReturn = doc.getDouble("priceReturn")?.toFloat() ?: 90f
+                        )
+                    } catch (e: Exception) { null }
+                }
+                _lines.value = lines
+            } catch (e: Exception) { }
+        }
+    }
+
 }

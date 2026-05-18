@@ -137,6 +137,7 @@ fun ProfileScreen(
                                 Text(
                                     text = when (state.user.role) {
                                         UserRole.PASSENGER -> stringResource(R.string.passenger)
+                                        UserRole.DRIVER -> "Возач"
                                         UserRole.OPERATOR -> stringResource(R.string.operator)
                                         UserRole.BOTH -> stringResource(R.string.passenger_and_operator)
                                     },

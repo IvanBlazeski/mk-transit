@@ -194,13 +194,20 @@ class AuthViewModel @Inject constructor() : ViewModel() {
                 val doc = firestore.collection("users").document(uid).get().await()
                 if (doc.exists()) {
                     val email = doc.getString("email") ?: ""
+                    val roleStr = doc.getString("role") ?: "PASSENGER"
                     val operatorEmail = "ivan@operator.mk"
 
-                    val role = if (email == operatorEmail) UserRole.OPERATOR else UserRole.PASSENGER
-
-                    if (email == operatorEmail && doc.getString("role") != "OPERATOR") {
+                    // Ако е operator email — форсирај OPERATOR
+                    if (email == operatorEmail && roleStr != "OPERATOR") {
                         firestore.collection("users").document(uid)
                             .update("role", "OPERATOR").await()
+                    }
+
+                    val role = when {
+                        email == operatorEmail -> UserRole.OPERATOR
+                        roleStr == "DRIVER" -> UserRole.DRIVER
+                        roleStr == "OPERATOR" -> UserRole.OPERATOR
+                        else -> UserRole.PASSENGER
                     }
 
                     val user = User(

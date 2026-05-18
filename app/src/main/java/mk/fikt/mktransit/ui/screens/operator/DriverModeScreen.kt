@@ -28,6 +28,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.tasks.await
 import mk.fikt.mktransit.R
+import mk.fikt.mktransit.domain.model.UserRole
+import mk.fikt.mktransit.viewmodel.AuthState
+import mk.fikt.mktransit.viewmodel.AuthViewModel
 import mk.fikt.mktransit.viewmodel.OperatorViewModel
 
 @SuppressLint("MissingPermission")
@@ -36,11 +39,16 @@ import mk.fikt.mktransit.viewmodel.OperatorViewModel
 fun DriverModeScreen(
     onBack: () -> Unit,
     onScanQR: () -> Unit,
-    viewModel: OperatorViewModel = hiltViewModel()
+    isStandaloneDriver: Boolean = false,
+    viewModel: OperatorViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val profile by viewModel.profile.collectAsStateWithLifecycle()
     val lines by viewModel.lines.collectAsStateWithLifecycle()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
+
+    val isDriverAccount = authState is AuthState.Success &&
+            (authState as AuthState.Success).user.role == UserRole.DRIVER
 
     var isActive by remember { mutableStateOf(false) }
     var selectedLineId by remember { mutableStateOf("") }
@@ -53,7 +61,7 @@ fun DriverModeScreen(
 
     LaunchedEffect(Unit) {
         selectedLineName = selectLineText
-        viewModel.loadOperatorProfile()
+        viewModel.loadAllLines()
     }
 
     LaunchedEffect(isActive, selectedLineId) {
@@ -91,10 +99,29 @@ fun DriverModeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.driver_mode)) },
+                title = {
+                    Text(
+                        stringResource(R.string.driver_mode),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    if (!isStandaloneDriver) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(48.dp))
+                    }
+                },
+                actions = {
+                    if (isStandaloneDriver) {
+                        IconButton(onClick = { authViewModel.logout(context) }) {
+                            Icon(Icons.Filled.Logout, contentDescription = "Logout", tint = MaterialTheme.colorScheme.onPrimary)
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(48.dp))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -113,7 +140,6 @@ fun DriverModeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Status Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -122,7 +148,7 @@ fun DriverModeScreen(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
@@ -147,26 +173,20 @@ fun DriverModeScreen(
                         text = if (isActive) stringResource(R.string.driving) else stringResource(R.string.offline),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                     if (isActive) {
-                        Text(text = selectedLineName, fontSize = 14.sp, color = Color.White.copy(alpha = 0.9f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = selectedLineName, fontSize = 14.sp, color = Color.White.copy(alpha = 0.9f), textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "GPS: %.4f, %.4f".format(currentLat, currentLon),
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
+                        Text(text = "GPS: %.4f, %.4f".format(currentLat, currentLon), fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f), textAlign = TextAlign.Center)
                     }
                 }
             }
 
-            // Line Selector
             if (!isActive) {
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
+                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
                         value = selectedLineName,
                         onValueChange = {},
@@ -191,7 +211,6 @@ fun DriverModeScreen(
                 }
             }
 
-            // Start/Stop Button
             Button(
                 onClick = {
                     if (selectedLineId.isNotBlank()) {
@@ -213,27 +232,14 @@ fun DriverModeScreen(
             ) {
                 Icon(if (isActive) Icons.Filled.Stop else Icons.Filled.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    if (isActive) stringResource(R.string.stop_driving) else stringResource(R.string.start_driving),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text(if (isActive) stringResource(R.string.stop_driving) else stringResource(R.string.start_driving), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
 
             HorizontalDivider()
 
-            Text(
-                text = stringResource(R.string.ticket_validation),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
+            Text(text = stringResource(R.string.ticket_validation), fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.align(Alignment.Start))
 
-            OutlinedButton(
-                onClick = onScanQR,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
+            OutlinedButton(onClick = onScanQR, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp)) {
                 Icon(Icons.Filled.QrCodeScanner, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.scan_qr), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -242,19 +248,12 @@ fun DriverModeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                )
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
             ) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.gps_info),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        textAlign = TextAlign.Start
-                    )
+                    Text(text = stringResource(R.string.gps_info), fontSize = 13.sp, color = MaterialTheme.colorScheme.onPrimaryContainer, textAlign = TextAlign.Start)
                 }
             }
         }
