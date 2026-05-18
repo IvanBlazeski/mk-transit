@@ -240,7 +240,6 @@ fun ScheduleDialog(
     var departureTime by remember { mutableStateOf("") }
     var selectedDays by remember { mutableStateOf(setOf<String>()) }
 
-    val allDays = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
     val dayLabels = mapOf(
         "MON" to "Пон", "TUE" to "Вто", "WED" to "Сре",
         "THU" to "Чет", "FRI" to "Пет", "SAT" to "Саб", "SUN" to "Нед"
@@ -251,71 +250,88 @@ fun ScheduleDialog(
         title = { Text("Возен ред — $lineName") },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
                 val forwardSchedule = schedule.filter { it.direction == "FORWARD" }
                 val returnSchedule = schedule.filter { it.direction == "RETURN" }
 
-                if (forwardSchedule.isNotEmpty()) {
-                    Text("→ Во еден правец", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
-                    forwardSchedule.forEach { s ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "🕐 ${s.departureTime} — ${s.days.mapNotNull { dayLabels[it] }.joinToString(", ")}",
-                                fontSize = 13.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                if (forwardSchedule.isNotEmpty() || returnSchedule.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (forwardSchedule.isNotEmpty()) {
+                                Text("→ Во еден правец", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                                forwardSchedule.forEach { s ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                        Text(text = "🕐 ${s.departureTime}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(64.dp))
+                                        Text(text = s.days.mapNotNull { dayLabels[it] }.joinToString(", "), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), modifier = Modifier.weight(1f))
+                                        IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }, modifier = Modifier.size(32.dp)) {
+                                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
+                            }
+                            if (forwardSchedule.isNotEmpty() && returnSchedule.isNotEmpty()) {
+                                HorizontalDivider()
+                            }
+                            if (returnSchedule.isNotEmpty()) {
+                                Text("← Повратно", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                                returnSchedule.forEach { s ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                        Text(text = "🕐 ${s.departureTime}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(64.dp))
+                                        Text(text = s.days.mapNotNull { dayLabels[it] }.joinToString(", "), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), modifier = Modifier.weight(1f))
+                                        IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }, modifier = Modifier.size(32.dp)) {
+                                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+                    HorizontalDivider()
                 }
 
-                if (returnSchedule.isNotEmpty()) {
-                    Text("← Повратно", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
-                    returnSchedule.forEach { s ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "🕐 ${s.departureTime} — ${s.days.mapNotNull { dayLabels[it] }.joinToString(", ")}",
-                                fontSize = 13.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = { viewModel.deleteSchedule(lineId, s.scheduleId) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                }
-
-                HorizontalDivider()
-                Text("Додај поаѓање", fontWeight = FontWeight.SemiBold)
+                Text("Додај поаѓање", fontWeight = FontWeight.Bold, fontSize = 15.sp)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = direction == "FORWARD", onClick = { direction = "FORWARD" }, label = { Text("→ Напред") })
-                    FilterChip(selected = direction == "RETURN", onClick = { direction = "RETURN" }, label = { Text("← Назад") })
+                    FilterChip(selected = direction == "FORWARD", onClick = { direction = "FORWARD" }, label = { Text("→ Напред") }, modifier = Modifier.weight(1f))
+                    FilterChip(selected = direction == "RETURN", onClick = { direction = "RETURN" }, label = { Text("← Назад") }, modifier = Modifier.weight(1f))
                 }
 
                 OutlinedTextField(
                     value = departureTime,
                     onValueChange = { departureTime = it },
-                    label = { Text("Час на поаѓање (пр. 08:00)") },
+                    label = { Text("Час (пр. 08:00)") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
                 )
 
-                Text("Денови:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    allDays.forEach { day ->
-                        FilterChip(
-                            selected = day in selectedDays,
-                            onClick = {
-                                selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
-                            },
-                            label = { Text(dayLabels[day] ?: day, fontSize = 11.sp) }
-                        )
+                Text("Денови:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                        listOf("MON", "TUE", "WED", "THU", "FRI").forEach { day ->
+                            FilterChip(
+                                selected = day in selectedDays,
+                                onClick = { selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day },
+                                label = { Text(dayLabels[day] ?: day, fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("SAT", "SUN").forEach { day ->
+                            FilterChip(
+                                selected = day in selectedDays,
+                                onClick = { selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day },
+                                label = { Text(dayLabels[day] ?: day, fontSize = 11.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
 
@@ -336,7 +352,9 @@ fun ScheduleDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) } }
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.save)) }
+        }
     )
 }
 
@@ -436,13 +454,8 @@ fun OperatorLineCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Горен ред — број + ime + статус
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.size(48.dp)
-                ) {
+                Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(12.dp), modifier = Modifier.size(48.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(text = line.lineNumber, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
@@ -464,12 +477,9 @@ fun OperatorLineCard(
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(4.dp))
-
-            // Долен ред — цени + акции
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text(text = "Еден правец: ${line.priceOneWay.toInt()} MKD", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
