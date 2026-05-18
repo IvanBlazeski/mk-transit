@@ -215,8 +215,7 @@ Video demos are available in the `/screencasts` folder:
 ## 👨‍💻 Author
 
 **Ivan Blazeski**  
-Faculty of Information and Communication Technologies (FIKT)  
-Ss. Cyril and Methodius University, Skopje
+Faculty of Information and Communication Technologies (FIKT)
 
 ---
 
